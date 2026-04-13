@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    /* Hide scrollbar cross-browser */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@layer components {
+    /* ── Carousel scroll container ── */
+    .carousel-track {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding-bottom: 1rem;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        /* Prevent the track from collapsing or leaking */
+        width: 100%;
+        min-width: 0;
+    }
+    .carousel-track::-webkit-scrollbar {
+        display: none;
+    }
+    .carousel-track {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* ── Individual carousel item ── */
+    .carousel-item {
+        flex-shrink: 0;
+        /* Mobile-first: show ~1.5 cards so user knows it scrolls */
+        width: 68vw;
+        max-width: 280px;
+        scroll-snap-align: start;
+    }
+
+    /* Tablet: show ~2.5 cards */
+    @media (min-width: 640px) {
+        .carousel-item {
+            width: 280px;
+        }
+    }
+
+    /* Desktop: fixed comfortable width */
+    @media (min-width: 1024px) {
+        .carousel-item {
+            width: 288px;
+        }
+    }
+
+    /* ── Listing card ── */
+    .listing-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid #f3f4f6;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+        transition: box-shadow 0.3s ease;
+    }
+    .listing-card:hover {
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    .listing-card-image {
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 4 / 3;
+        background: #f3f4f6;
+        flex-shrink: 0;
+    }
+    .listing-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .listing-card:hover .listing-card-image img {
+        transform: scale(1.05);
+    }
+    .listing-card-body {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+}

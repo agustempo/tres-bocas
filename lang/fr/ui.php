@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'search_placeholder' => 'Rechercher des services à 3 BOCAS',
+    'ask_about'          => 'Renseignez-vous sur ce service',
+    'categories'         => 'Catégories',
+    'reviews'            => 'Avis',
+    'messages'           => 'Messages',
+    'home'               => 'Accueil',
+    'listings'           => 'Services',
+    'dashboard'          => 'Tableau de bord',
+    'reservations'       => 'Réservations',
+    'login'              => 'Connexion',
+    'register'           => 'S\'inscrire',
+    'logout'             => 'Se déconnecter',
+    'profile'            => 'Profil',
+    'send_message'       => 'Envoyer le message',
+    'preferred_date'     => 'Date souhaitée',
+    'optional'           => 'facultatif',
+    'see_all'            => 'Voir tout',
+    'find_services'      => 'Trouvez des services locaux',
+    'find_services_sub'  => 'Découvrez des prestataires de confiance près de chez vous',
+    'no_results'         => 'Aucun résultat trouvé',
+    'browse_all'         => 'Voir tous les services',
+];

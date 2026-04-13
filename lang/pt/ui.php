@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'search_placeholder' => 'Buscar serviços em 3 BOCAS',
+    'ask_about'          => 'Perguntar sobre este serviço',
+    'categories'         => 'Categorias',
+    'reviews'            => 'Avaliações',
+    'messages'           => 'Mensagens',
+    'home'               => 'Início',
+    'listings'           => 'Serviços',
+    'dashboard'          => 'Painel',
+    'reservations'       => 'Reservas',
+    'login'              => 'Entrar',
+    'register'           => 'Cadastrar',
+    'logout'             => 'Sair',
+    'profile'            => 'Perfil',
+    'send_message'       => 'Enviar mensagem',
+    'preferred_date'     => 'Data preferida',
+    'optional'           => 'opcional',
+    'see_all'            => 'Ver todos',
+    'find_services'      => 'Encontre serviços locais',
+    'find_services_sub'  => 'Descubra fornecedores confiáveis na sua área',
+    'no_results'         => 'Nenhum resultado encontrado',
+    'browse_all'         => 'Ver todos os serviços',
+];

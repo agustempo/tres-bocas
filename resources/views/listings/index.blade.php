@@ -1,0 +1,121 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Listings</h2>
+            @auth
+                <a href="{{ route('listings.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
+                    + New Listing
+                </a>
+            @endauth
+        </div>
+    </x-slot>
+
+    <div class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            {{-- Flash message --}}
+            @if (session('success'))
+                <div class="mb-5 p-4 bg-green-100 border border-green-200 text-green-800 rounded-md">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Search & Filter --}}
+            <form method="GET" action="{{ route('listings.index') }}"
+                  class="mb-6 flex flex-col sm:flex-row gap-3">
+                <input type="text"
+                       name="q"
+                       value="{{ request('q') }}"
+                       placeholder="Search listings…"
+                       class="flex-1 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+
+                <select name="category"
+                        class="sm:w-48 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">All categories</option>
+                    @foreach ($categories as $cat)
+                        <option value="{{ $cat->slug }}" {{ request('category') === $cat->slug ? 'selected' : '' }}>
+                            {{ $cat->name }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <button type="submit"
+                        class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-700">
+                    Search
+                </button>
+
+                @if (request('q') || request('category'))
+                    <a href="{{ route('listings.index') }}"
+                       class="px-4 py-2 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 text-center">
+                        Clear
+                    </a>
+                @endif
+            </form>
+
+            {{-- Results --}}
+            @if ($listings->isEmpty())
+                <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                    No listings found.
+                    @if (request('q') || request('category'))
+                        <a href="{{ route('listings.index') }}" class="ml-1 text-indigo-600 hover:underline">Clear filters</a>
+                    @endif
+                </div>
+            @else
+                {{-- Result count --}}
+                <p class="text-sm text-gray-500 mb-4">
+                    Showing {{ $listings->firstItem() }}–{{ $listings->lastItem() }} of {{ $listings->total() }} listings
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach ($listings as $listing)
+                        <a href="{{ route('listings.show', $listing) }}"
+                           class="block bg-white rounded-lg shadow hover:shadow-md transition p-5">
+
+                            {{-- Category + Status badges --}}
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                                    {{ $listing->category->name }}
+                                </span>
+                                @if ($listing->status !== 'published')
+                                    @php
+                                        $badge = match($listing->status) {
+                                            'draft'    => 'bg-yellow-100 text-yellow-700',
+                                            'archived' => 'bg-gray-100 text-gray-500',
+                                            default    => 'bg-gray-100 text-gray-500',
+                                        };
+                                    @endphp
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded capitalize {{ $badge }}">
+                                        {{ $listing->status }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            <h3 class="text-base font-semibold text-gray-900 mb-1 leading-snug">
+                                {{ $listing->title }}
+                            </h3>
+                            <p class="text-sm text-gray-500 line-clamp-2">{{ $listing->description }}</p>
+
+                            <div class="mt-3 flex items-center gap-3 text-sm text-gray-400">
+                                @if ($listing->user->reviews_count > 0)
+                                    <span class="text-yellow-500">&#9733;</span>
+                                    <span>{{ number_format($listing->user->avg_rating, 1) }}</span>
+                                    <span class="text-gray-300">·</span>
+                                    <span>{{ $listing->user->name }}</span>
+                                @else
+                                    <span>{{ $listing->user->name }}</span>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                {{-- Pagination --}}
+                <div class="mt-8">
+                    {{ $listings->links() }}
+                </div>
+            @endif
+
+        </div>
+    </div>
+</x-app-layout>

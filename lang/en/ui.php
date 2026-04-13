@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'search_placeholder' => 'Search services in 3 BOCAS',
+    'ask_about'          => 'Ask about this service',
+    'categories'         => 'Categories',
+    'reviews'            => 'Reviews',
+    'messages'           => 'Messages',
+    'home'               => 'Home',
+    'listings'           => 'Listings',
+    'dashboard'          => 'Dashboard',
+    'reservations'       => 'Reservations',
+    'login'              => 'Log in',
+    'register'           => 'Register',
+    'logout'             => 'Log Out',
+    'profile'            => 'Profile',
+    'send_message'       => 'Send message',
+    'preferred_date'     => 'Preferred date',
+    'optional'           => 'optional',
+    'see_all'            => 'See all',
+    'find_services'      => 'Find local services',
+    'find_services_sub'  => 'Discover trusted providers in your area',
+    'no_results'         => 'No results found',
+    'browse_all'         => 'Browse all services',
+];

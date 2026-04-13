@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Laravel",
+      "runtimeExecutable": "/usr/local/bin/php",
+      "runtimeArgs": ["artisan", "serve", "--port=8080"],
+      "port": 8080
+    },
+    {
+      "name": "Vite",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["node_modules/.bin/vite"],
+      "port": 5173
+    },
+    {
+      "name": "Queue",
+      "runtimeExecutable": "/usr/local/bin/php",
+      "runtimeArgs": ["artisan", "queue:listen", "--tries=1", "--timeout=0"],
+      "port": null
+    },
+    {
+      "name": "Pail (logs)",
+      "runtimeExecutable": "/usr/local/bin/php",
+      "runtimeArgs": ["artisan", "pail", "--timeout=0"],
+      "port": null
+    }
+  ]
+}
