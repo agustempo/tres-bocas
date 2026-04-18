@@ -12,7 +12,17 @@
                 <span class="font-black text-base tracking-tight">3 BOCAS</span>
             </a>
 
-            {{-- Center: Search (hidden on mobile, shown on sm+) --}}
+            {{-- Center: Nav links + Search (hidden on mobile, shown on sm+) --}}
+            <nav class="hidden sm:flex items-center gap-1 shrink-0">
+                <a href="{{ route('marea.index') }}"
+                   class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                          {{ request()->routeIs('marea.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    <span class="text-base leading-none">🌊</span>
+                    Marea
+                </a>
+            </nav>
+
+            {{-- Search (hidden on mobile, shown on sm+) --}}
             <form method="GET" action="{{ route('home') }}"
                   class="hidden sm:flex flex-1 max-w-xl mx-auto">
                 <div class="relative w-full">
@@ -186,6 +196,11 @@
         <a href="{{ route('listings.index') }}"
            class="block px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
             {{ __('ui.listings') }}
+        </a>
+        <a href="{{ route('marea.index') }}"
+           class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium
+                  {{ request()->routeIs('marea.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50' }}">
+            <span>🌊</span> Marea
         </a>
 
         @auth

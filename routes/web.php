@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\ListingController;
+use App\Http\Controllers\MareaController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
@@ -11,6 +12,9 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+
+// Useful local information
+Route::get('/marea', [MareaController::class, 'index'])->name('marea.index');
 
 // Language switcher
 Route::get('/lang/{locale}', function (string $locale) {
