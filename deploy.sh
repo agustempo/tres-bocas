@@ -152,7 +152,7 @@ CRON_FILE="/etc/cron.d/masbocas"
 
 if [[ ! -f "$CRON_FILE" ]]; then
   log "Installing cron entry for Laravel scheduler..."
-  echo "$CRON_JOB" > "$CRON_FILE"
+  sudo echo "$CRON_JOB" > "$CRON_FILE"
   sudo chmod 644 "$CRON_FILE"
   log "Cron installed: $CRON_FILE"
 else
