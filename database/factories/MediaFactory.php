@@ -15,7 +15,7 @@ class MediaFactory extends Factory
     {
         return [
             'listing_id' => Listing::factory(),
-            'path' => 'images/sample-' . fake()->numberBetween(1, 10) . '.jpg',
+            'path' => 'images/sample-' . $this->faker->numberBetween(1, 10) . '.jpg',
             'type' => 'image',
         ];
     }

@@ -17,8 +17,8 @@ class ReviewFactory extends Factory
         return [
             'listing_id' => Listing::factory(),
             'user_id' => User::factory(),
-            'rating' => fake()->numberBetween(1, 5),
-            'comment' => fake()->sentence(),
+            'rating' => $this->faker->numberBetween(1, 5),
+            'comment' => $this->faker->sentence(),
             'approved' => false,
         ];
     }

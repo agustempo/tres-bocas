@@ -17,10 +17,10 @@ class ListingFactory extends Factory
         return [
             'user_id' => User::factory(),
             'category_id' => Category::factory(),
-            'title' => fake()->sentence(3),
-            'description' => fake()->paragraph(),
-            'contact' => fake()->email(),
-            'status' => fake()->randomElement(['draft', 'published', 'archived']),
+            'title' => $this->faker->sentence(3),
+            'description' => $this->faker->paragraph(),
+            'contact' => $this->faker->email(),
+            'status' => $this->faker->randomElement(['draft', 'published', 'archived']),
         ];
     }
 
