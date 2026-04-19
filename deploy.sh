@@ -58,6 +58,14 @@ git checkout "$GIT_BRANCH"
 git pull origin "$GIT_BRANCH"
 log "Code updated. HEAD: $(git log -1 --oneline)"
 
+# ─── Step 5 · SQLite database ────────────────────────────────────────────────
+log "Ensuring SQLite database file exists..."
+DB_FILE="$APP_DIR/database/database.sqlite"
+if [[ ! -f "$DB_FILE" ]]; then
+  touch "$DB_FILE"
+  log "Created $DB_FILE"
+fi
+
 # ─── Step 8 · Storage permissions ────────────────────────────────────────────
 log "Setting storage and cache permissions..."
 mkdir -p "$APP_DIR/storage/framework/cache/data"
@@ -111,13 +119,7 @@ if grep -q "^APP_DEBUG=true" "$APP_DIR/.env"; then
   sed -i 's/^APP_DEBUG=true/APP_DEBUG=false/' "$APP_DIR/.env"
 fi
 
-# ─── Step 5 · SQLite database ────────────────────────────────────────────────
-log "Ensuring SQLite database file exists..."
-DB_FILE="$APP_DIR/database/database.sqlite"
-if [[ ! -f "$DB_FILE" ]]; then
-  touch "$DB_FILE"
-  log "Created $DB_FILE"
-fi
+
 
 # ─── Step 6 · Migrations ─────────────────────────────────────────────────────
 if [[ "$SKIP_MIGRATE" == false ]]; then
