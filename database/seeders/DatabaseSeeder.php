@@ -100,7 +100,7 @@ class DatabaseSeeder extends Seeder
                     'listing_id' => $listing->id,
                     'user_id' => $users->random()->id,
                     'rating' => rand(3, 5),
-                    'comment' => fake()->sentence(),
+                    'comment' => $this->faker->sentence(),
                     'approved' => true,
                 ]);
             }
@@ -110,7 +110,7 @@ class DatabaseSeeder extends Seeder
                 'listing_id' => $listing->id,
                 'user_id' => $users->random()->id,
                 'rating' => rand(1, 5),
-                'comment' => fake()->sentence(),
+                'comment' => $this->faker->sentence(),
                 'approved' => false,
             ]);
         }
