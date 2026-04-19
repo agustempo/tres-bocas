@@ -58,6 +58,26 @@ git checkout "$GIT_BRANCH"
 git pull origin "$GIT_BRANCH"
 log "Code updated. HEAD: $(git log -1 --oneline)"
 
+# ─── Step 8 · Storage permissions ────────────────────────────────────────────
+log "Setting storage and cache permissions..."
+mkdir -p "$APP_DIR/storage/framework/cache/data"
+mkdir -p "$APP_DIR/storage/framework/sessions"
+mkdir -p "$APP_DIR/storage/framework/views"
+mkdir -p "$APP_DIR/storage/logs"
+mkdir -p "$APP_DIR/bootstrap/cache"
+
+# Use www-data if nginx/php-fpm run as that user
+WEB_USER="www-data"
+if id "$WEB_USER" &>/dev/null; then
+  sudo chown -R "$WEB_USER:$WEB_USER" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+  sudo chown "$WEB_USER:$WEB_USER" "$DB_FILE"
+  sudo chmod 664 "$DB_FILE"
+  sudo chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+  log "Permissions set for $WEB_USER."
+else
+  warn "User $WEB_USER not found. Set permissions manually."
+fi
+
 # ─── Step 2 · PHP dependencies ───────────────────────────────────────────────
 log "Installing PHP dependencies (no-dev)..."
 composer install \
@@ -123,25 +143,6 @@ log "Caches rebuilt."
 php artisan cache:clear
 log "Application cache cleared."
 
-# ─── Step 8 · Storage permissions ────────────────────────────────────────────
-log "Setting storage and cache permissions..."
-mkdir -p "$APP_DIR/storage/framework/cache/data"
-mkdir -p "$APP_DIR/storage/framework/sessions"
-mkdir -p "$APP_DIR/storage/framework/views"
-mkdir -p "$APP_DIR/storage/logs"
-mkdir -p "$APP_DIR/bootstrap/cache"
-
-# Use www-data if nginx/php-fpm run as that user
-WEB_USER="www-data"
-if id "$WEB_USER" &>/dev/null; then
-  sudo chown -R "$WEB_USER:$WEB_USER" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
-  sudo chown "$WEB_USER:$WEB_USER" "$DB_FILE"
-  sudo chmod 664 "$DB_FILE"
-  sudo chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
-  log "Permissions set for $WEB_USER."
-else
-  warn "User $WEB_USER not found. Set permissions manually."
-fi
 
 # ─── Step 9 · Laravel scheduler cron ─────────────────────────────────────────
 CRON_JOB="* * * * * $WEB_USER php $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
