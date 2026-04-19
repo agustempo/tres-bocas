@@ -134,10 +134,10 @@ mkdir -p "$APP_DIR/bootstrap/cache"
 # Use www-data if nginx/php-fpm run as that user
 WEB_USER="www-data"
 if id "$WEB_USER" &>/dev/null; then
-  chown -R "$WEB_USER:$WEB_USER" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
-  chown "$WEB_USER:$WEB_USER" "$DB_FILE"
-  chmod 664 "$DB_FILE"
-  chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+  sudo chown -R "$WEB_USER:$WEB_USER" "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
+  sudo chown "$WEB_USER:$WEB_USER" "$DB_FILE"
+  sudo chmod 664 "$DB_FILE"
+  sudo chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
   log "Permissions set for $WEB_USER."
 else
   warn "User $WEB_USER not found. Set permissions manually."
@@ -159,7 +159,7 @@ fi
 # ─── Step 10 · Restart services ──────────────────────────────────────────────
 log "Restarting PHP-FPM..."
 if systemctl is-active --quiet "$PHP_FPM_SERVICE"; then
-  systemctl restart "$PHP_FPM_SERVICE"
+  sudo systemctl restart "$PHP_FPM_SERVICE"
   log "$PHP_FPM_SERVICE restarted."
 else
   warn "$PHP_FPM_SERVICE is not running. Start it manually: systemctl start $PHP_FPM_SERVICE"
@@ -167,7 +167,7 @@ fi
 
 log "Reloading nginx..."
 if systemctl is-active --quiet "$NGINX_SERVICE"; then
-  nginx -t && systemctl reload "$NGINX_SERVICE"
+  sudo nginx -t && sudo systemctl reload "$NGINX_SERVICE"
   log "$NGINX_SERVICE reloaded."
 else
   warn "$NGINX_SERVICE is not running. Start it manually: systemctl start $NGINX_SERVICE"
