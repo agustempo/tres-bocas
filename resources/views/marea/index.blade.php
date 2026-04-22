@@ -7,15 +7,15 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
             <div class="flex items-center gap-3 mb-1">
                 <span class="text-3xl leading-none">🌊</span>
-                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Marea</h1>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">{{ __('ui.marea_title') }}</h1>
             </div>
             <p class="text-gray-500 text-sm ml-11">San Fernando &mdash; Delta del Paraná</p>
 
             @if($tide['updated_at'])
                 <p class="text-xs text-gray-400 mt-2 ml-11">
-                    Última actualización: <span class="font-semibold text-gray-500">{{ $tide['updated_at'] }}</span>
+                    {{ __('ui.last_updated') }} <span class="font-semibold text-gray-500">{{ $tide['updated_at'] }}</span>
                     <span class="text-gray-300 mx-1">·</span>
-                    <a href="{{ route('marea.index') }}" class="text-blue-500 hover:underline">actualizar</a>
+                    <a href="{{ route('marea.index') }}" class="text-blue-500 hover:underline">{{ __('ui.update_link') }}</a>
                 </p>
             @endif
         </div>
@@ -28,10 +28,9 @@
             <div class="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 flex items-start gap-3">
                 <span class="text-xl mt-0.5">⚠️</span>
                 <div>
-                    <p class="font-semibold text-amber-800 text-sm">No se pudo obtener la información de marea en este momento.</p>
+                    <p class="font-semibold text-amber-800 text-sm">{{ __('ui.tide_error_title') }}</p>
                     <p class="text-amber-700 text-xs mt-1">
-                        Las fuentes oficiales pueden estar temporalmente inaccesibles.
-                        Intentá de nuevo más tarde o consultá directamente en
+                        {{ __('ui.tide_error_body') }}
                         <a href="https://www.hidro.gov.ar/oceanografia/pronostico.asp"
                            target="_blank" rel="noopener"
                            class="underline">hidro.gov.ar</a>.
@@ -64,7 +63,7 @@
         @endphp
 
         <div class="rounded-2xl border {{ $c['border'] }} {{ $c['bg'] }} p-6">
-            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Estado de la marea</p>
+            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">{{ __('ui.tide_status_heading') }}</p>
 
             <div class="flex flex-col sm:flex-row sm:items-start gap-6">
 
@@ -107,11 +106,11 @@
 
                         <div class="border-t border-black/5 pt-3">
                             @if($wind['available'])
-                                <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Viento</p>
+                                <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{{ __('ui.wind') }}</p>
                                 <p class="text-sm font-semibold text-gray-700">💨 {{ $wind['direction'] }}</p>
                                 <p class="text-sm text-gray-500 tabular-nums">{{ $wind['speed'] }} km/h</p>
                             @else
-                                <p class="text-xs text-gray-400 italic">Viento no disponible</p>
+                                <p class="text-xs text-gray-400 italic">{{ __('ui.wind_unavailable') }}</p>
                             @endif
                         </div>
                     </div>
@@ -129,7 +128,7 @@
 
             <div>
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-bold text-gray-800 text-lg">Pronóstico</h2>
+                    <h2 class="font-bold text-gray-800 text-lg">{{ __('ui.forecast') }}</h2>
                     <a href="{{ $tide['chart_source'] ?? 'https://www.hidro.gov.ar/oceanografia/pronostico.asp' }}"
                        target="_blank" rel="noopener"
                        class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
@@ -228,7 +227,7 @@
         @if(!empty($tide['hourly']))
             <div class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="font-bold text-gray-800">Alturas horarias</h2>
+                    <h2 class="font-bold text-gray-800">{{ __('ui.hourly_heights') }}</h2>
                     <a href="https://www.hidro.gov.ar/oceanografia/alturashorarias.asp"
                        target="_blank" rel="noopener"
                        class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
@@ -239,8 +238,8 @@
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="bg-gray-50 text-left">
-                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Hora</th>
-                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Nivel (m)</th>
+                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('ui.hour_col') }}</th>
+                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ __('ui.level_col') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -253,7 +252,7 @@
                                 <tr class="{{ $isNow ? 'bg-blue-50' : 'hover:bg-gray-50' }} transition-colors">
                                     <td class="px-5 py-2.5 tabular-nums {{ $isNow ? 'font-bold text-blue-700' : 'text-gray-600' }}">
                                         @if($isNow)
-                                            <span title="Última medición" class="inline-flex items-center gap-1.5">
+                                            <span title="{{ __('ui.last_reading_tooltip') }}" class="inline-flex items-center gap-1.5">
                                                 <span class="text-blue-500">👉</span>
                                                 <span>{{ $row['hour'] }}</span>
                                             </span>
@@ -264,7 +263,7 @@
                                     <td class="px-5 py-2.5 font-semibold tabular-nums {{ $isNow ? 'text-blue-700' : 'text-gray-700' }}">
                                         {{ $row['level'] }}
                                         @if($isNow)
-                                            <span class="ml-2 text-xs font-normal text-blue-400">última medición</span>
+                                            <span class="ml-2 text-xs font-normal text-blue-400">{{ __('ui.last_reading') }}</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -278,7 +277,7 @@
         {{-- ── 4. TIDE CHART ── --}}
         <div class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h2 class="font-bold text-gray-800">Gráfico de marea &mdash; San Fernando</h2>
+                <h2 class="font-bold text-gray-800">{{ __('ui.tide_chart_title') }}</h2>
                 <a href="{{ $tide['chart_source'] }}"
                    target="_blank" rel="noopener"
                    class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
@@ -287,17 +286,17 @@
             </div>
             <div class="p-4">
                 <img src="{{ $tide['chart_image'] }}"
-                     alt="Pronóstico de marea San Fernando — INA"
+                     alt="{{ __('ui.tide_chart_title') }}"
                      class="w-full h-auto rounded-xl"
                      loading="lazy"
                      onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden')">
                 <p class="hidden text-sm text-gray-400 text-center py-6">
-                    El gráfico no está disponible. <a href="{{ $tide['chart_source'] }}" target="_blank" class="text-blue-500 underline">Ver en INA ↗</a>
+                    {{ __('ui.chart_unavailable') }} <a href="{{ $tide['chart_source'] }}" target="_blank" class="text-blue-500 underline">{{ __('ui.view_at_ina') }}</a>
                 </p>
                 <p class="text-xs text-gray-400 text-center mt-3">
-                    Fuente: Instituto Nacional del Agua (INA) &mdash;
+                    {{ __('ui.chart_source_label') }} &mdash;
                     <a href="{{ $tide['chart_source'] }}" target="_blank" rel="noopener" class="hover:underline">
-                        ver en sitio original
+                        {{ __('ui.see_original') }}
                     </a>
                 </p>
             </div>
@@ -305,27 +304,27 @@
 
         {{-- ── SOURCES ── --}}
         <div class="rounded-2xl border border-gray-100 bg-gray-50 px-6 py-5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Fuentes oficiales</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{{ __('ui.official_sources') }}</h3>
             <ul class="space-y-1.5 text-sm">
                 <li>
                     <a href="https://www.hidro.gov.ar/oceanografia/pronostico.asp"
                        target="_blank" rel="noopener"
                        class="text-blue-600 hover:underline">
-                        Pronóstico de mareas — Servicio de Hidrografía Naval (SHN)
+                        {{ __('ui.tide_forecast_source') }}
                     </a>
                 </li>
                 <li>
                     <a href="https://www.hidro.gov.ar/oceanografia/alturashorarias.asp"
                        target="_blank" rel="noopener"
                        class="text-blue-600 hover:underline">
-                        Alturas horarias — Servicio de Hidrografía Naval (SHN)
+                        {{ __('ui.hourly_source') }}
                     </a>
                 </li>
                 <li>
                     <a href="{{ $tide['chart_source'] }}"
                        target="_blank" rel="noopener"
                        class="text-blue-600 hover:underline">
-                        Gráfico de marea — Instituto Nacional del Agua (INA)
+                        {{ __('ui.tide_chart_source') }}
                     </a>
                 </li>
             </ul>

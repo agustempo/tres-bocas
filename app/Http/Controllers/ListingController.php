@@ -49,16 +49,24 @@ class ListingController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'contact'     => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'title'                => 'required|string|max:255',
+            'description'          => 'required|string',
+            'contact'              => 'required|string|max:255',
+            'category_id'          => 'required|exists:categories,id',
+            'location.latitude'    => 'nullable|numeric|between:-90,90',
+            'location.longitude'   => 'nullable|numeric|between:-180,180',
+            'location.description' => 'nullable|string|max:255',
         ]);
 
         $listing = $request->user()->listings()->create([
-            ...$validated,
-            'status' => 'draft',
+            'title'       => $validated['title'],
+            'description' => $validated['description'],
+            'contact'     => $validated['contact'],
+            'category_id' => $validated['category_id'],
+            'status'      => 'draft',
         ]);
+
+        $this->syncLocation($listing, $validated['location'] ?? []);
 
         return redirect()->route('listings.show', $listing)
             ->with('success', 'Listing created successfully. It is currently a draft — publish it when ready.');
@@ -75,7 +83,7 @@ class ListingController extends Controller
             );
         }
 
-        $listing->load(['category', 'user', 'media']);
+        $listing->load(['category', 'user', 'media', 'location']);
 
         return view('listings.show', compact('listing'));
     }
@@ -84,6 +92,7 @@ class ListingController extends Controller
     {
         $this->authorize('update', $listing);
 
+        $listing->load('location');
         $categories = Category::orderBy('name')->get();
 
         return view('listings.edit', compact('listing', 'categories'));
@@ -94,14 +103,25 @@ class ListingController extends Controller
         $this->authorize('update', $listing);
 
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'contact'     => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'status'      => 'required|in:draft,published,archived',
+            'title'                => 'required|string|max:255',
+            'description'          => 'required|string',
+            'contact'              => 'required|string|max:255',
+            'category_id'          => 'required|exists:categories,id',
+            'status'               => 'required|in:draft,published,archived',
+            'location.latitude'    => 'nullable|numeric|between:-90,90',
+            'location.longitude'   => 'nullable|numeric|between:-180,180',
+            'location.description' => 'nullable|string|max:255',
         ]);
 
-        $listing->update($validated);
+        $listing->update([
+            'title'       => $validated['title'],
+            'description' => $validated['description'],
+            'contact'     => $validated['contact'],
+            'category_id' => $validated['category_id'],
+            'status'      => $validated['status'],
+        ]);
+
+        $this->syncLocation($listing, $validated['location'] ?? []);
 
         return redirect()->route('listings.show', $listing)
             ->with('success', 'Listing updated successfully.');
@@ -115,5 +135,26 @@ class ListingController extends Controller
 
         return redirect()->route('listings.index')
             ->with('success', 'Listing deleted successfully.');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private function syncLocation(Listing $listing, array $locationData): void
+    {
+        $lat = $locationData['latitude']  ?? null;
+        $lng = $locationData['longitude'] ?? null;
+
+        if (filled($lat) && filled($lng)) {
+            $listing->location()->updateOrCreate([], [
+                'latitude'    => (float) $lat,
+                'longitude'   => (float) $lng,
+                'description' => filled($locationData['description'] ?? null)
+                                    ? $locationData['description']
+                                    : null,
+            ]);
+        } else {
+            // Remove location if coordinates were cleared
+            $listing->location()->delete();
+        }
     }
 }

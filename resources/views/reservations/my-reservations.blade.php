@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">My Reservations</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('ui.my_reservations') }}</h2>
     </x-slot>
 
     <div class="py-8">
@@ -32,7 +32,7 @@
                             ? 'bg-white text-gray-900 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150">
-                    My Bookings
+                    {{ __('ui.my_bookings') }}
                     @if ($asCustomer->isNotEmpty())
                         <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full"
                               :class="tab === 'bookings' ? 'bg-indigo-100 text-indigo-700' : ''">
@@ -45,7 +45,7 @@
                             ? 'bg-white text-gray-900 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150">
-                    Incoming
+                    {{ __('ui.incoming') }}
                     @if ($asProvider->isNotEmpty())
                         <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full"
                               :class="tab === 'incoming' ? 'bg-indigo-100 text-indigo-700' : ''">
@@ -65,10 +65,10 @@
                                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
-                        <p class="text-gray-500 text-sm">You haven't made any reservations yet.</p>
+                        <p class="text-gray-500 text-sm">{{ __('ui.no_bookings_yet') }}</p>
                         <a href="{{ route('listings.index') }}"
                            class="inline-block mt-4 px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700">
-                            Browse listings
+                            {{ __('ui.browse_listings') }}
                         </a>
                     </div>
                 @else
@@ -100,9 +100,16 @@
                                             'cancelled' => 'bg-red-500 text-white',
                                             default     => 'bg-gray-400 text-white',
                                         };
+                                        $statusLabel = match($res->status) {
+                                            'pending'   => __('ui.status_pending'),
+                                            'confirmed' => __('ui.status_confirmed'),
+                                            'completed' => __('ui.status_completed'),
+                                            'cancelled' => __('ui.status_cancelled'),
+                                            default     => $res->status,
+                                        };
                                     @endphp
-                                    <span class="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full capitalize {{ $badge }}">
-                                        {{ $res->status }}
+                                    <span class="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full {{ $badge }}">
+                                        {{ $statusLabel }}
                                     </span>
                                 </div>
 
@@ -140,7 +147,7 @@
                                             <a href="{{ route('listings.show', $res->listing) }}#review"
                                                class="block w-full text-center py-2 bg-indigo-600 hover:bg-indigo-700
                                                       text-white text-sm font-semibold rounded-xl transition-colors">
-                                                Leave a Review
+                                                {{ __('ui.leave_review') }}
                                             </a>
                                         </div>
                                     @endif
@@ -161,7 +168,7 @@
                                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
                             </svg>
                         </div>
-                        <p class="text-gray-500 text-sm">No one has reserved your listings yet.</p>
+                        <p class="text-gray-500 text-sm">{{ __('ui.no_incoming_yet') }}</p>
                     </div>
                 @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -191,9 +198,16 @@
                                             'cancelled' => 'bg-red-500 text-white',
                                             default     => 'bg-gray-400 text-white',
                                         };
+                                        $statusLabel = match($res->status) {
+                                            'pending'   => __('ui.status_pending'),
+                                            'confirmed' => __('ui.status_confirmed'),
+                                            'completed' => __('ui.status_completed'),
+                                            'cancelled' => __('ui.status_cancelled'),
+                                            default     => $res->status,
+                                        };
                                     @endphp
-                                    <span class="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full capitalize {{ $badge }}">
-                                        {{ $res->status }}
+                                    <span class="absolute top-3 right-3 text-xs font-semibold px-2.5 py-1 rounded-full {{ $badge }}">
+                                        {{ $statusLabel }}
                                     </span>
                                 </div>
 
@@ -235,7 +249,7 @@
                                                     <button type="submit"
                                                             class="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white
                                                                    text-sm font-semibold rounded-xl transition-colors">
-                                                        Confirm
+                                                        {{ __('ui.confirm') }}
                                                     </button>
                                                 </form>
                                             @endif
@@ -246,7 +260,7 @@
                                                     <button type="submit"
                                                             class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white
                                                                    text-sm font-semibold rounded-xl transition-colors">
-                                                        Mark Complete
+                                                        {{ __('ui.mark_complete') }}
                                                     </button>
                                                 </form>
                                             @endif
@@ -254,10 +268,10 @@
                                             <form method="POST" action="{{ route('reservations.cancel', $res) }}">
                                                 @csrf
                                                 <button type="submit"
-                                                        onclick="return confirm('Cancel this reservation?')"
+                                                        onclick="return confirm('{{ __('ui.cancel_reservation_confirm') }}')"
                                                         class="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-600
                                                                hover:text-red-600 text-sm font-semibold rounded-xl transition-colors">
-                                                    Cancel
+                                                    {{ __('ui.cancel') }}
                                                 </button>
                                             </form>
                                         </div>

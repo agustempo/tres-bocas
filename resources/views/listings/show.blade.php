@@ -56,7 +56,7 @@
                                 @if ($listing->status !== 'published')
                                     <span class="text-xs font-medium px-2.5 py-1 rounded-full capitalize
                                         {{ $listing->status === 'draft' ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500' }}">
-                                        {{ $listing->status }}
+                                        {{ $listing->status === 'draft' ? __('ui.status_draft') : __('ui.status_archived') }}
                                     </span>
                                 @endif
                             </div>
@@ -68,16 +68,16 @@
                             @can('update', $listing)
                                 <a href="{{ route('listings.edit', $listing) }}"
                                    class="px-3 py-1.5 bg-white border border-gray-200 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors">
-                                    Edit
+                                    {{ __('ui.edit') }}
                                 </a>
                             @endcan
                             @can('delete', $listing)
                                 <form method="POST" action="{{ route('listings.destroy', $listing) }}"
-                                      onsubmit="return confirm('Delete this listing?')">
+                                      onsubmit="return confirm('{{ __('ui.delete_confirm') }}')">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                             class="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700">
-                                        Delete
+                                        {{ __('ui.delete') }}
                                     </button>
                                 </form>
                             @endcan
@@ -92,7 +92,7 @@
                             {{ strtoupper(substr($owner->name, 0, 1)) }}
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Provided by</p>
+                            <p class="text-sm text-gray-500">{{ __('ui.provided_by') }}</p>
                             <p class="font-semibold text-gray-900">{{ $owner->name }}</p>
                         </div>
                         @if ($owner->reviews_count > 0)
@@ -108,9 +108,100 @@
 
                     {{-- Description --}}
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900 mb-3">About this service</h2>
+                        <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ __('ui.about_service') }}</h2>
                         <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ $listing->description }}</p>
                     </div>
+
+                    {{-- Location map --}}
+                    @if ($listing->location)
+                        {{-- Pass coordinates as data attributes — keeps x-data attribute free of JS and quotes --}}
+                        <div
+                            x-data="listingMap($el)"
+                            x-init="init()"
+                            data-lat="{{ (float) $listing->location->latitude }}"
+                            data-lng="{{ (float) $listing->location->longitude }}">
+
+                            <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ __('ui.location_label') }}</h2>
+
+                            @if ($listing->location->description)
+                                <p class="text-sm text-gray-500 mb-2 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                              clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ $listing->location->description }}
+                                </p>
+                            @endif
+
+                            <div x-ref="map"
+                                 class="w-full h-56 sm:h-64 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
+                            </div>
+
+                            <a href="https://www.openstreetmap.org/?mlat={{ $listing->location->latitude }}&mlon={{ $listing->location->longitude }}#map=16/{{ $listing->location->latitude }}/{{ $listing->location->longitude }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="mt-1.5 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 transition-colors">
+                                {{ __('ui.location_open_map') }}
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                        </div>
+
+                        <script>
+                        function listingMap(rootEl) {
+                            return {
+                                _map: null,
+
+                                init() {
+                                    const lat = parseFloat(rootEl.dataset.lat);
+                                    const lng = parseFloat(rootEl.dataset.lng);
+                                    const el  = this.$refs.map;
+
+                                    const loadLeaflet = () => {
+                                        if (!document.querySelector('link[data-leaflet-css]')) {
+                                            const link = document.createElement('link');
+                                            link.rel = 'stylesheet';
+                                            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                                            link.dataset.leafletCss = '';
+                                            document.head.appendChild(link);
+                                        }
+                                        return new Promise((resolve, reject) => {
+                                            if (window.L) return resolve();
+                                            const s = document.createElement('script');
+                                            s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                                            s.onload = resolve;
+                                            s.onerror = reject;
+                                            document.head.appendChild(s);
+                                        });
+                                    };
+
+                                    const observer = new IntersectionObserver((entries) => {
+                                        if (!entries[0].isIntersecting) return;
+                                        observer.disconnect();
+                                        loadLeaflet().then(() => {
+                                            this._map = L.map(el, {
+                                                zoomControl:     true,
+                                                scrollWheelZoom: false,
+                                            }).setView([lat, lng], 15);
+                                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                                attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                                                maxZoom: 19,
+                                            }).addTo(this._map);
+                                            L.marker([lat, lng]).addTo(this._map);
+                                        }).catch((e) => {
+                                            console.warn('[ListingMap] Failed to load Leaflet.', e);
+                                        });
+                                    }, { threshold: 0.1 });
+
+                                    observer.observe(el);
+                                },
+                            };
+                        }
+                        </script>
+                    @endif
 
                     {{-- Contact --}}
                     @if ($listing->contact)
@@ -122,7 +213,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-xs text-gray-400 font-medium">Contact</p>
+                                <p class="text-xs text-gray-400 font-medium">{{ __('ui.contact_small') }}</p>
                                 <p class="text-sm text-gray-700 font-medium">{{ $listing->contact }}</p>
                             </div>
                         </div>
@@ -131,7 +222,7 @@
                     {{-- Upload photo (owner/admin) --}}
                     @can('update', $listing)
                         <div class="p-5 border border-dashed border-gray-200 rounded-2xl">
-                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Add Photos</h3>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ __('ui.add_photos') }}</h3>
                             <form method="POST" action="{{ route('media.store', $listing) }}" enctype="multipart/form-data">
                                 @csrf
                                 <div class="flex items-center gap-3">
@@ -141,7 +232,7 @@
                                                   file:bg-white hover:file:bg-gray-50">
                                     <button type="submit"
                                             class="px-4 py-1.5 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700">
-                                        Upload
+                                        {{ __('ui.upload') }}
                                     </button>
                                 </div>
                                 @error('image')
@@ -154,7 +245,7 @@
                     {{-- Reviews --}}
                     <div id="reviews">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                            Reviews
+                            {{ __('ui.reviews') }}
                             @if ($owner->reviews_count > 0)
                                 <span class="text-base font-normal text-gray-400 ml-1">({{ $owner->reviews_count }})</span>
                             @endif
@@ -187,7 +278,7 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-gray-400 py-4">No reviews yet. Be the first after booking!</p>
+                            <p class="text-sm text-gray-400 py-4">{{ __('ui.no_reviews_yet') }}</p>
                         @endforelse
                     </div>
 
@@ -206,11 +297,11 @@
                             @endphp
                             @if ($canReview)
                                 <div id="review" class="p-6 bg-amber-50 border border-amber-100 rounded-3xl">
-                                    <h3 class="text-base font-semibold text-gray-900 mb-4">Share your experience</h3>
+                                    <h3 class="text-base font-semibold text-gray-900 mb-4">{{ __('ui.share_experience') }}</h3>
                                     <form method="POST" action="{{ route('reviews.store', $listing) }}">
                                         @csrf
                                         <div class="mb-4">
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('ui.rating_label') }}</label>
                                             <div class="flex gap-1.5">
                                                 @for ($i = 1; $i <= 5; $i++)
                                                     <label class="cursor-pointer group/star">
@@ -230,7 +321,7 @@
                                         </div>
                                         <div class="mb-5">
                                             <textarea name="comment" rows="3" required
-                                                      placeholder="What did you think of this service?"
+                                                      placeholder="{{ __('ui.review_placeholder') }}"
                                                       class="w-full border-amber-200 bg-white rounded-2xl text-sm resize-none
                                                              focus:ring-amber-400 focus:border-amber-400">{{ old('comment') }}</textarea>
                                             @error('comment')
@@ -239,7 +330,7 @@
                                         </div>
                                         <button type="submit"
                                                 class="px-6 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-xl transition-colors">
-                                            Submit Review
+                                            {{ __('ui.submit_review') }}
                                         </button>
                                     </form>
                                 </div>
@@ -251,7 +342,7 @@
                                 @if ($pending->isNotEmpty())
                                     <div class="p-5 bg-amber-50 border border-amber-200 rounded-2xl">
                                         <h3 class="text-sm font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                                            Pending Reviews
+                                            {{ __('ui.pending_reviews_admin') }}
                                             <span class="bg-amber-200 text-amber-900 text-xs px-2 py-0.5 rounded-full">{{ $pending->count() }}</span>
                                         </h3>
                                         @foreach ($pending as $review)
@@ -264,7 +355,7 @@
                                                     @csrf
                                                     <button type="submit"
                                                             class="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">
-                                                        Approve
+                                                        {{ __('ui.approve') }}
                                                     </button>
                                                 </form>
                                             </div>
@@ -327,16 +418,16 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     </div>
-                                    <h4 class="font-semibold text-gray-900 mb-1">Message sent!</h4>
-                                    <p class="text-sm text-gray-500 mb-4">Reservation pending confirmation.</p>
+                                    <h4 class="font-semibold text-gray-900 mb-1">{{ __('ui.message_sent') }}</h4>
+                                    <p class="text-sm text-gray-500 mb-4">{{ __('ui.reservation_pending_confirmation') }}</p>
                                     <button @click="sent = false; message = ''; requestedDate = ''"
-                                            class="text-sm text-rose-500 hover:underline">Send another</button>
+                                            class="text-sm text-rose-500 hover:underline">{{ __('ui.send_another') }}</button>
                                 </div>
 
                                 {{-- Form state --}}
                                 <div x-show="!sent">
-                                    <h3 class="text-base font-semibold text-gray-900 mb-1">Ask about this service</h3>
-                                    <p class="text-sm text-gray-500 mb-5">Free to contact · No commitment</p>
+                                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ __('ui.ask_about') }}</h3>
+                                    <p class="text-sm text-gray-500 mb-5">{{ __('ui.free_no_commitment') }}</p>
 
                                     <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
                                         <span x-text="error"></span>
@@ -351,7 +442,7 @@
                                                              focus:ring-rose-400 focus:border-rose-400 placeholder-gray-400"></textarea>
                                         </div>
                                         <div class="mb-5">
-                                            <label class="block text-xs font-medium text-gray-500 mb-1">Preferred date (optional)</label>
+                                            <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('ui.preferred_date') }} ({{ __('ui.optional') }})</label>
                                             <input type="date" x-model="requestedDate"
                                                    class="w-full border-gray-200 bg-gray-50 rounded-xl text-sm
                                                           focus:ring-rose-400 focus:border-rose-400">
@@ -361,29 +452,29 @@
                                                 :class="(sending || message.trim() === '') ? 'opacity-50 cursor-not-allowed' : 'hover:bg-rose-600'"
                                                 class="w-full py-3.5 bg-rose-500 text-white text-sm font-semibold rounded-2xl
                                                        shadow-lg shadow-rose-200 transition-colors duration-150">
-                                            <span x-show="!sending">Send message</span>
+                                            <span x-show="!sending">{{ __('ui.send_message') }}</span>
                                             <span x-show="sending" class="flex items-center justify-center gap-2">
                                                 <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                                                 </svg>
-                                                Sending…
+                                                {{ __('ui.sending') }}
                                             </span>
                                         </button>
                                     @else
                                         <a href="{{ route('login') }}"
                                            class="block w-full py-3.5 bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold
                                                   rounded-2xl text-center shadow-lg shadow-rose-200 transition-colors">
-                                            Log in to contact
+                                            {{ __('ui.log_in_to_contact') }}
                                         </a>
                                         <p class="text-center text-xs text-gray-400 mt-3">
-                                            No account?
-                                            <a href="{{ route('register') }}" class="text-rose-500 hover:underline">Sign up free</a>
+                                            {{ __('ui.no_account') }}
+                                            <a href="{{ route('register') }}" class="text-rose-500 hover:underline">{{ __('ui.sign_up_free') }}</a>
                                         </p>
                                     @endauth
                                 </div>
 
-                                <p class="text-xs text-gray-400 text-center mt-4">Your inquiry is free and non-binding</p>
+                                <p class="text-xs text-gray-400 text-center mt-4">{{ __('ui.inquiry_non_binding') }}</p>
                             </div>
 
                             {{-- Reserve button --}}
@@ -393,8 +484,8 @@
                                         <button @click="rOpen = !rOpen"
                                                 class="w-full py-3 border-2 border-gray-200 hover:border-gray-400
                                                        text-gray-700 text-sm font-semibold rounded-2xl text-center transition-colors">
-                                            <span x-show="!rOpen">Or make a reservation →</span>
-                                            <span x-show="rOpen" x-cloak>Hide reservation form</span>
+                                            <span x-show="!rOpen">{{ __('ui.make_reservation') }}</span>
+                                            <span x-show="rOpen" x-cloak>{{ __('ui.hide_reservation_form') }}</span>
                                         </button>
                                         <div x-show="rOpen" x-cloak
                                              x-transition:enter="transition ease-out duration-200"
@@ -404,18 +495,18 @@
                                             <form method="POST" action="{{ route('reservations.store', $listing) }}">
                                                 @csrf
                                                 <div class="mb-3">
-                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Date &amp; time (optional)</label>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('ui.datetime_optional') }}</label>
                                                     <input type="datetime-local" name="scheduled_at"
                                                            class="w-full border-gray-200 bg-white rounded-xl text-sm focus:ring-rose-400 focus:border-rose-400">
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label class="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
+                                                    <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('ui.notes_optional_label') }}</label>
                                                     <textarea name="notes" rows="2"
                                                               class="w-full border-gray-200 bg-white rounded-xl text-sm resize-none focus:ring-rose-400 focus:border-rose-400"></textarea>
                                                 </div>
                                                 <button type="submit"
                                                         class="w-full py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors">
-                                                    Confirm reservation
+                                                    {{ __('ui.confirm_reservation') }}
                                                 </button>
                                             </form>
                                         </div>

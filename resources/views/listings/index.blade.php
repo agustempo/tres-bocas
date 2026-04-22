@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Listings</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('ui.listings_title') }}</h2>
             @auth
                 <a href="{{ route('listings.create') }}"
                    class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
-                    + New Listing
+                    {{ __('ui.new_listing') }}
                 </a>
             @endauth
         </div>
@@ -27,12 +27,12 @@
                 <input type="text"
                        name="q"
                        value="{{ request('q') }}"
-                       placeholder="Search listings…"
+                       placeholder="{{ __('ui.search_listings') }}"
                        class="flex-1 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
 
                 <select name="category"
                         class="sm:w-48 border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">All categories</option>
+                    <option value="">{{ __('ui.all_categories') }}</option>
                     @foreach ($categories as $cat)
                         <option value="{{ $cat->slug }}" {{ request('category') === $cat->slug ? 'selected' : '' }}>
                             {{ $cat->name }}
@@ -42,13 +42,13 @@
 
                 <button type="submit"
                         class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-700">
-                    Search
+                    {{ __('ui.search') }}
                 </button>
 
                 @if (request('q') || request('category'))
                     <a href="{{ route('listings.index') }}"
                        class="px-4 py-2 bg-white border border-gray-300 text-gray-600 text-sm rounded-md hover:bg-gray-50 text-center">
-                        Clear
+                        {{ __('ui.clear') }}
                     </a>
                 @endif
             </form>
@@ -56,15 +56,15 @@
             {{-- Results --}}
             @if ($listings->isEmpty())
                 <div class="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                    No listings found.
+                    {{ __('ui.no_listings_found') }}
                     @if (request('q') || request('category'))
-                        <a href="{{ route('listings.index') }}" class="ml-1 text-indigo-600 hover:underline">Clear filters</a>
+                        <a href="{{ route('listings.index') }}" class="ml-1 text-indigo-600 hover:underline">{{ __('ui.clear_filters') }}</a>
                     @endif
                 </div>
             @else
                 {{-- Result count --}}
                 <p class="text-sm text-gray-500 mb-4">
-                    Showing {{ $listings->firstItem() }}–{{ $listings->lastItem() }} of {{ $listings->total() }} listings
+                    {{ __('ui.showing_results', ['from' => $listings->firstItem(), 'to' => $listings->lastItem(), 'total' => $listings->total()]) }}
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -84,9 +84,14 @@
                                             'archived' => 'bg-gray-100 text-gray-500',
                                             default    => 'bg-gray-100 text-gray-500',
                                         };
+                                        $statusLabel = match($listing->status) {
+                                            'draft'    => __('ui.status_draft'),
+                                            'archived' => __('ui.status_archived'),
+                                            default    => $listing->status,
+                                        };
                                     @endphp
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded capitalize {{ $badge }}">
-                                        {{ $listing->status }}
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded {{ $badge }}">
+                                        {{ $statusLabel }}
                                     </span>
                                 @endif
                             </div>
