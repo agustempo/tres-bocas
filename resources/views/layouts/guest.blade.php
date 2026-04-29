@@ -35,9 +35,9 @@
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50">
             <div class="mb-6">
-                <a href="/" class="flex flex-col items-center gap-2">
-                    <x-logo variant="icon" class="h-16 w-16" />
-                    <x-logo variant="full" class="h-8" />
+                <a href="/" class="flex flex-col items-center gap-3">
+                    <x-logo variant="icon" class="h-24 w-24" />
+                    <span class="text-xl font-bold tracking-wide text-[#147a72]">Isla.Ar</span>
                 </a>
             </div>
 
