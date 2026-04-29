@@ -2,7 +2,7 @@
 
 return [
     // ── Navigation & global ──────────────────────────────────────────────────
-    'search_placeholder' => 'Buscar servicios en 3 BOCAS',
+    'search_placeholder' => 'Buscar servicios en Isla.Ar',
     'ask_about'          => 'Consultar sobre este servicio',
     'categories'         => 'Categorías',
     'reviews'            => 'Reseñas',

@@ -9,7 +9,7 @@
             <a href="{{ route('home') }}"
                class="shrink-0 flex items-center gap-1.5 text-gray-900 hover:opacity-80 transition-opacity">
                 <span class="text-xl leading-none">🏝️</span>
-                <span class="font-black text-base tracking-tight">3 BOCAS</span>
+                <span class="font-black text-base tracking-tight">Isla.Ar</span>
             </a>
 
             {{-- Center: Nav links + Search (hidden on mobile, shown on sm+) --}}

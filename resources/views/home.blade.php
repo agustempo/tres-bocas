@@ -6,7 +6,7 @@
         <div class="bg-gradient-to-br from-rose-50 via-white to-indigo-50 border-b border-gray-100">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 text-center">
                 <h1 class="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-2">
-                    🏝️ 3 BOCAS
+                    🏝️ Isla.Ar
                 </h1>
                 <p class="text-gray-500 text-base sm:text-lg">
                     {{ __('ui.find_services_sub') }}
