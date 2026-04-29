@@ -7,9 +7,8 @@
 
             {{-- Left: Branding --}}
             <a href="{{ route('home') }}"
-               class="shrink-0 flex items-center gap-1.5 text-gray-900 hover:opacity-80 transition-opacity">
-                <span class="text-xl leading-none">🏝️</span>
-                <span class="font-black text-base tracking-tight">Isla.Ar</span>
+               class="shrink-0 hover:opacity-80 transition-opacity">
+                <x-logo variant="icon" class="h-10 w-10" />
             </a>
 
             {{-- Center: Nav links + Search (hidden on mobile, shown on sm+) --}}
