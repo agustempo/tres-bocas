@@ -129,7 +129,7 @@
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-800 text-lg">{{ __('ui.forecast') }}</h2>
-                    <a href="{{ $tide['chart_source'] ?? 'https://www.hidro.gov.ar/oceanografia/pronostico.asp' }}"
+                    <a href="https://www.hidro.gov.ar/oceanografia/pronostico.asp"
                        target="_blank" rel="noopener"
                        class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
                         hidro.gov.ar ↗
