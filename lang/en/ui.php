@@ -158,4 +158,10 @@ return [
     'tide_forecast_source'   => 'Tide forecast — Naval Hydrography Service (SHN)',
     'hourly_source'          => 'Hourly heights — Naval Hydrography Service (SHN)',
     'tide_chart_source'      => 'Tide chart — National Water Institute (INA)',
+
+    // ── Weather summary ──────────────────────────────────────────────────────
+    'weather_summary'        => 'Weather',
+    'weather_unavailable'    => 'Weather data temporarily unavailable.',
+    'weather_next_6h'        => 'Next 6 hours',
+    'weather_source'         => 'Weather forecast — Open-Meteo',
 ];

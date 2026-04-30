@@ -47,7 +47,7 @@ class TideService
         $trend   = $this->resolveTrend($hourly, $current);
         $status  = $this->resolveStatus($current, $trend);
 
-        $wind = app(WindService::class)->refresh();
+        $weather = app(WeatherService::class)->refresh();
 
         $data = [
             'forecast'     => $forecast,
@@ -55,7 +55,8 @@ class TideService
             'current'      => $current,
             'trend'        => $trend,
             'status'       => $status,
-            'wind'         => $wind,
+            'wind'         => $weather['wind'],   // backward-compat key used by the status card
+            'weather'      => $weather,           // full weather block for the weather summary
             'chart_image'  => self::CHART_IMAGE,
             'chart_source' => self::CHART_SOURCE,
             'updated_at'   => now()->setTimezone(self::TZ)->format('H:i'),

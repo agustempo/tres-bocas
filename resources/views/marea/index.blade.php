@@ -39,6 +39,131 @@
             </div>
         @endif
 
+
+        {{-- ── WEATHER SUMMARY ── --}}
+        @php $weather = $tide['weather'] ?? ['available' => false, 'hourly' => []]; @endphp
+
+        @if($weather['available'])
+        <div x-data="{ open: false }"
+             class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden
+                    dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/20">
+
+            {{-- ── Summary row (always visible, tappable to expand) ── --}}
+            <button @click="open = !open"
+                    class="w-full flex items-center gap-3 px-5 py-4 text-left select-none
+                           hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition-colors">
+
+                {{-- Condition emoji --}}
+                <span class="text-2xl leading-none shrink-0" aria-hidden="true">{{ $weather['emoji'] }}</span>
+
+                {{-- Data pills --}}
+                <div class="flex-1 flex flex-wrap items-center gap-x-5 gap-y-1 min-w-0">
+
+                    {{-- Temperature --}}
+                    <span class="text-base font-bold tabular-nums text-gray-800 dark:text-gray-100">
+                        {{ $weather['temperature'] }}°C
+                    </span>
+
+                    {{-- Wind --}}
+                    @if($weather['wind']['available'])
+                    <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                        <span aria-hidden="true">💨</span>
+                        {{ $weather['wind']['direction'] }} {{ $weather['wind']['speed'] }} km/h
+                    </span>
+                    @endif
+
+                    {{-- Rain probability --}}
+                    @php
+                        $rainColor = $weather['rain'] >= 60
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : ($weather['rain'] >= 30
+                                ? 'text-blue-500 dark:text-blue-400'
+                                : 'text-gray-400 dark:text-gray-500');
+                    @endphp
+                    <span class="flex items-center gap-1 text-sm {{ $rainColor }}">
+                        <span aria-hidden="true">💧</span>
+                        {{ $weather['rain'] }}%
+                    </span>
+
+                </div>
+
+                {{-- Condition label (desktop) + expand chevron --}}
+                <div class="shrink-0 flex items-center gap-2">
+                    <span class="hidden sm:block text-xs text-gray-400 dark:text-gray-500">
+                        {{ $weather['condition'] }}
+                    </span>
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200"
+                         :class="open ? 'rotate-180' : ''"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                         aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+
+            </button>
+
+            {{-- ── Hourly forecast (expandable) ── --}}
+            @if(!empty($weather['hourly']))
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 style="display:none">
+
+                <div class="border-t border-gray-100 dark:border-gray-800 px-5 py-4">
+
+                    <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                        {{ __('ui.weather_next_6h') }}
+                    </p>
+
+                    {{-- Horizontal scroll row --}}
+                    <div class="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1
+                                snap-x snap-mandatory scroll-smooth">
+                        @foreach($weather['hourly'] as $hw)
+                        @php
+                            $cardRainColor = $hw['rain'] >= 60
+                                ? 'text-blue-500 dark:text-blue-400'
+                                : ($hw['rain'] >= 30
+                                    ? 'text-blue-400 dark:text-blue-500'
+                                    : 'text-gray-400 dark:text-gray-600');
+                        @endphp
+                        <div class="snap-start shrink-0 flex flex-col items-center gap-1.5
+                                    bg-gray-50 dark:bg-gray-800
+                                    border border-gray-100 dark:border-gray-700
+                                    rounded-2xl px-3.5 py-3 min-w-[72px]">
+                            <span class="text-xs font-semibold tabular-nums text-gray-500 dark:text-gray-400">
+                                {{ $hw['hour'] }}
+                            </span>
+                            <span class="text-xl leading-none" aria-hidden="true">{{ $hw['emoji'] }}</span>
+                            <span class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">
+                                {{ $hw['temp'] }}°
+                            </span>
+                            <span class="text-xs tabular-nums {{ $cardRainColor }}">
+                                💧 {{ $hw['rain'] }}%
+                            </span>
+                        </div>
+                        @endforeach
+                    </div>
+
+                </div>
+            </div>
+            @endif
+
+        </div>
+
+        @else
+        {{-- Failsafe: weather unavailable but tides still show fine --}}
+        <div class="rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3
+                    dark:border-gray-800 dark:bg-gray-800/50">
+            <p class="text-sm text-gray-400 dark:text-gray-500 italic">
+                ⛅ {{ __('ui.weather_unavailable') }}
+            </p>
+        </div>
+        @endif
+
         {{-- ── 1. STATUS CARD ── --}}
         @php
             $status  = $tide['status'];
@@ -104,7 +229,7 @@
                         </p>
                         <p class="text-xs text-gray-400 mb-3 dark:text-gray-500">{{ $current['hour'] }}</p>
 
-                        <div class="border-t border-black/5 pt-3">
+                        <!-- <div class="border-t border-black/5 pt-3">
                             @if($wind['available'])
                                 <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 dark:text-gray-500">{{ __('ui.wind') }}</p>
                                 <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">💨 {{ $wind['direction'] }}</p>
@@ -112,7 +237,7 @@
                             @else
                                 <p class="text-xs text-gray-400 italic dark:text-gray-500">{{ __('ui.wind_unavailable') }}</p>
                             @endif
-                        </div>
+                        </div> -->
                     </div>
                 @endif
 
@@ -325,6 +450,13 @@
                        target="_blank" rel="noopener"
                        class="text-blue-600 hover:underline">
                         {{ __('ui.tide_chart_source') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="https://open-meteo.com"
+                       target="_blank" rel="noopener"
+                       class="text-blue-600 hover:underline">
+                        {{ __('ui.weather_source') }}
                     </a>
                 </li>
             </ul>

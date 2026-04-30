@@ -53,5 +53,7 @@
             {{ $slot }}
         </main>
 
+        <x-auth-modal />
+
     </body>
 </html>

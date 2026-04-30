@@ -227,10 +227,12 @@
                 @else
                     <div class="hidden sm:flex items-center gap-2">
                         <a href="{{ route('login') }}"
+                           @click.prevent="$store.auth.show('login')"
                            class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
                             {{ __('ui.login') }}
                         </a>
                         <a href="{{ route('register') }}"
+                           @click.prevent="$store.auth.show('register')"
                            class="px-4 py-1.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900
                                   text-sm font-medium rounded-full hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors">
                             {{ __('ui.register') }}
@@ -357,10 +359,12 @@
         @else
             <div class="pt-1 border-t border-gray-100 dark:border-gray-800 flex gap-3 px-3 py-2">
                 <a href="{{ route('login') }}"
+                   @click.prevent="$store.auth.show('login'); mobileOpen = false"
                    class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
                     {{ __('ui.login') }}
                 </a>
                 <a href="{{ route('register') }}"
+                   @click.prevent="$store.auth.show('register'); mobileOpen = false"
                    class="text-sm font-medium text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300">
                     {{ __('ui.register') }}
                 </a>

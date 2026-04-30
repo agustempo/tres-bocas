@@ -158,4 +158,10 @@ return [
     'tide_forecast_source'   => 'Pronóstico de mareas — Servicio de Hidrografía Naval (SHN)',
     'hourly_source'          => 'Alturas horarias — Servicio de Hidrografía Naval (SHN)',
     'tide_chart_source'      => 'Gráfico de marea — Instituto Nacional del Agua (INA)',
+
+    // ── Weather summary ──────────────────────────────────────────────────────
+    'weather_summary'        => 'Tiempo',
+    'weather_unavailable'    => 'Datos del tiempo temporalmente no disponibles.',
+    'weather_next_6h'        => 'Próximas 6 horas',
+    'weather_source'         => 'Pronóstico del tiempo — Open-Meteo',
 ];
