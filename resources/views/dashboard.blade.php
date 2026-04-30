@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('ui.dashboard_title') }}</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-100">{{ __('ui.dashboard_title') }}</h2>
     </x-slot>
 
     <div class="py-8">
@@ -8,36 +8,36 @@
 
             {{-- Flash message --}}
             @if (session('success'))
-                <div class="p-4 bg-green-100 border border-green-200 text-green-800 rounded-md">
+                <div class="p-4 bg-green-100 border border-green-200 text-green-800 rounded-md dark:bg-green-900/20 dark:border-green-800 dark:text-green-300">
                     {{ session('success') }}
                 </div>
             @endif
 
             {{-- Stats --}}
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <p class="text-sm font-medium text-gray-500 mb-1">
+                <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-900 dark:shadow-black/20">
+                    <p class="text-sm font-medium text-gray-500 mb-1 dark:text-gray-400">
                         {{ auth()->user()->isAdmin() ? __('ui.total_listings') : __('ui.my_listings_label') }}
                     </p>
-                    <p class="text-3xl font-bold text-gray-900">{{ $totalListings }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalListings }}</p>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <p class="text-sm font-medium text-gray-500 mb-1">{{ __('ui.published') }}</p>
+                <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-900 dark:shadow-black/20">
+                    <p class="text-sm font-medium text-gray-500 mb-1 dark:text-gray-400">{{ __('ui.published') }}</p>
                     <p class="text-3xl font-bold text-green-600">{{ $publishedListings }}</p>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <p class="text-sm font-medium text-gray-500 mb-1">{{ __('ui.pending_reviews') }}</p>
+                <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-900 dark:shadow-black/20">
+                    <p class="text-sm font-medium text-gray-500 mb-1 dark:text-gray-400">{{ __('ui.pending_reviews') }}</p>
                     <p class="text-3xl font-bold text-yellow-600">{{ $pendingReviews }}</p>
                 </div>
             </div>
 
             {{-- My Listings table (regular users only) --}}
             @if ($myListings !== null)
-                <div class="bg-white rounded-lg shadow">
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                        <h3 class="text-base font-semibold text-gray-800">{{ __('ui.my_listings_title') }}</h3>
+                <div class="bg-white rounded-lg shadow dark:bg-gray-900 dark:shadow-black/20">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+                        <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">{{ __('ui.my_listings_title') }}</h3>
                         <a href="{{ route('listings.create') }}"
                            class="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
                             {{ __('ui.new_listing') }}
@@ -45,20 +45,20 @@
                     </div>
 
                     @if ($myListings->isEmpty())
-                        <div class="px-6 py-8 text-center text-gray-400 text-sm">
+                        <div class="px-6 py-8 text-center text-gray-400 text-sm dark:text-gray-500">
                             {{ __('ui.no_listings_yet') }}
                             <a href="{{ route('listings.create') }}" class="text-indigo-600 hover:underline">{{ __('ui.create_one_now') }}</a>
                         </div>
                     @else
-                        <div class="divide-y divide-gray-100">
+                        <div class="divide-y divide-gray-100 dark:divide-gray-800">
                             @foreach ($myListings as $listing)
                                 <div class="flex items-center justify-between px-6 py-4">
                                     <div>
                                         <a href="{{ route('listings.show', $listing) }}"
-                                           class="font-medium text-gray-900 hover:text-indigo-600">
+                                           class="font-medium text-gray-900 hover:text-indigo-600 dark:text-gray-100">
                                             {{ $listing->title }}
                                         </a>
-                                        <p class="text-sm text-gray-400 mt-0.5">{{ $listing->category->name }}</p>
+                                        <p class="text-sm text-gray-400 mt-0.5 dark:text-gray-500">{{ $listing->category->name }}</p>
                                     </div>
                                     <div class="flex items-center gap-3">
                                         @php
@@ -79,7 +79,7 @@
                                             {{ $statusLabel }}
                                         </span>
                                         <a href="{{ route('listings.edit', $listing) }}"
-                                           class="text-sm text-gray-500 hover:text-indigo-600">{{ __('ui.edit') }}</a>
+                                           class="text-sm text-gray-500 hover:text-indigo-600 dark:text-gray-400">{{ __('ui.edit') }}</a>
                                     </div>
                                 </div>
                             @endforeach
@@ -89,11 +89,11 @@
 
             {{-- Admin quick actions --}}
             @else
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-base font-semibold text-gray-800 mb-4">{{ __('ui.quick_actions') }}</h3>
+                <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-900 dark:shadow-black/20">
+                    <h3 class="text-base font-semibold text-gray-800 mb-4 dark:text-gray-100">{{ __('ui.quick_actions') }}</h3>
                     <div class="flex flex-wrap gap-3">
                         <a href="{{ route('listings.index') }}"
-                           class="px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-md hover:bg-indigo-100">
+                           class="px-4 py-2 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-md hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/30">
                             {{ __('ui.view_all_listings') }}
                         </a>
                         <a href="{{ route('listings.create') }}"
@@ -102,7 +102,7 @@
                         </a>
                     </div>
                     @if ($pendingReviews > 0)
-                        <p class="mt-4 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3">
+                        <p class="mt-4 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 dark:bg-yellow-900/20 dark:border-amber-800 dark:text-yellow-300">
                             &#9888; {{ trans_choice('ui.pending_approval_msg', $pendingReviews, ['count' => $pendingReviews]) }}
                         </p>
                     @endif

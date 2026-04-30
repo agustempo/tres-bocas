@@ -45,7 +45,7 @@
                  alt="{{ $listing->title }}"
                  loading="lazy">
         @else
-            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
                 <svg class="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                           d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -60,7 +60,7 @@
     {{-- Body --}}
     <div class="listing-card-body">
         <a href="{{ route('listings.show', $listing) }}"
-           class="font-semibold text-gray-900 hover:text-rose-600 text-sm leading-snug mb-1 transition-colors line-clamp-2 block">
+           class="font-semibold text-gray-900 hover:text-rose-600 text-sm leading-snug mb-1 transition-colors line-clamp-2 block dark:text-gray-100">
             {{ $listing->title }}
         </a>
 
@@ -68,16 +68,16 @@
             <div class="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-[10px] shrink-0">
                 {{ strtoupper(substr($listing->user->name, 0, 1)) }}
             </div>
-            <span class="text-xs text-gray-500 truncate">{{ $listing->user->name }}</span>
+            <span class="text-xs text-gray-500 truncate dark:text-gray-400">{{ $listing->user->name }}</span>
             @if ($listing->user->reviews_count > 0)
-                <span class="text-xs text-gray-400 ml-auto shrink-0 flex items-center gap-0.5">
+                <span class="text-xs text-gray-400 ml-auto shrink-0 flex items-center gap-0.5 dark:text-gray-500">
                     <span class="text-yellow-400">★</span>
                     {{ number_format($listing->user->avg_rating, 1) }}
                 </span>
             @endif
         </div>
 
-        <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1">
+        <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed flex-1 dark:text-gray-400">
             {{ $listing->description }}
         </p>
 
@@ -116,18 +116,18 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100"
-                 class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-auto overflow-hidden">
+                 class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-auto overflow-hidden dark:bg-gray-900 dark:shadow-black/20">
 
-                <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+                <div class="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-medium text-rose-500 uppercase tracking-wide mb-0.5">Inquiry</p>
-                            <h3 class="text-lg font-bold text-gray-900 leading-snug">{{ $listing->title }}</h3>
-                            <p class="text-sm text-gray-500 mt-0.5">{{ $listing->user->name }}</p>
+                            <h3 class="text-lg font-bold text-gray-900 leading-snug dark:text-gray-100">{{ $listing->title }}</h3>
+                            <p class="text-sm text-gray-500 mt-0.5 dark:text-gray-400">{{ $listing->user->name }}</p>
                         </div>
                         <button @click="open = false"
-                                class="shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                            <svg class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="shrink-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors dark:bg-gray-800 dark:hover:bg-gray-700">
+                            <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
@@ -141,8 +141,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                         </div>
-                        <h4 class="text-lg font-semibold text-gray-900 mb-1">Message sent!</h4>
-                        <p class="text-sm text-gray-500 mb-6">The provider will get back to you soon.</p>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-1 dark:text-gray-100">Message sent!</h4>
+                        <p class="text-sm text-gray-500 mb-6 dark:text-gray-400">The provider will get back to you soon.</p>
                         <button @click="open = false; sent = false; message = ''; requestedDate = ''"
                                 class="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800">
                             Close
@@ -150,23 +150,23 @@
                     </div>
 
                     <div x-show="!sent">
-                        <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+                        <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl dark:bg-red-900/20 dark:border-red-800">
                             <span x-text="error"></span>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5 dark:text-gray-200">
                                 Message <span class="text-rose-500">*</span>
                             </label>
                             <textarea x-model="message" rows="4"
                                       placeholder="Describe what you need…"
-                                      class="w-full border-gray-200 bg-gray-50 rounded-xl text-sm resize-none focus:ring-rose-400 focus:border-rose-400 placeholder-gray-400"></textarea>
+                                      class="w-full border-gray-200 bg-gray-50 rounded-xl text-sm resize-none focus:ring-rose-400 focus:border-rose-400 placeholder-gray-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-500"></textarea>
                         </div>
                         <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                                Preferred date <span class="text-xs text-gray-400 font-normal ml-1">optional</span>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5 dark:text-gray-200">
+                                Preferred date <span class="text-xs text-gray-400 font-normal ml-1 dark:text-gray-500">optional</span>
                             </label>
                             <input type="date" x-model="requestedDate"
-                                   class="w-full border-gray-200 bg-gray-50 rounded-xl text-sm focus:ring-rose-400 focus:border-rose-400">
+                                   class="w-full border-gray-200 bg-gray-50 rounded-xl text-sm focus:ring-rose-400 focus:border-rose-400 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-500">
                         </div>
                         <button @click="submit()"
                                 :disabled="sending || message.trim() === ''"

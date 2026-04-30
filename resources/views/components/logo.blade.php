@@ -1,24 +1,36 @@
 {{--
     x-logo component
     Props:
-      variant : 'full' (icono + texto) | 'icon' (solo el icono)
+      variant : 'icon' (solo el icono, default) | 'full' (icono + texto)
       class   : clases adicionales de Tailwind
 --}}
-@props(['variant' => 'full', 'class' => ''])
+@props(['variant' => 'icon', 'class' => ''])
 
 @if($variant === 'full')
-    <img
-        src="{{ asset('images/logo-full.svg') }}"
-        alt="{{ config('app.name') }}"
-        class="h-9 w-auto {{ $class }}"
-        height="36"
-    >
+    {{-- Full: icono + texto "Isla.Ar" --}}
+    <span class="flex items-center gap-2 {{ $class }}">
+        {{-- Icono: versión light (oculto en dark) --}}
+        <img src="{{ asset('images/logo-icon.svg') }}"
+             alt="{{ config('app.name') }}"
+             class="h-9 w-9 shrink-0 dark:hidden"
+             width="36" height="36">
+        {{-- Icono: versión dark (oculto en light) --}}
+        <img src="{{ asset('images/logo-icon-dark.svg') }}"
+             alt="{{ config('app.name') }}"
+             class="h-9 w-9 shrink-0 hidden dark:block"
+             width="36" height="36">
+        <span class="text-lg font-bold tracking-wide text-[#147a72] dark:text-teal-400">
+            {{ config('app.name') }}
+        </span>
+    </span>
 @else
-    <img
-        src="{{ asset('images/logo-icon.svg') }}"
-        alt="{{ config('app.name') }}"
-        class="h-8 w-8 {{ $class }}"
-        width="32"
-        height="32"
-    >
+    {{-- Solo ícono --}}
+    <img src="{{ asset('images/logo-icon.svg') }}"
+         alt="{{ config('app.name') }}"
+         class="dark:hidden {{ $class }}"
+         width="40" height="40">
+    <img src="{{ asset('images/logo-icon-dark.svg') }}"
+         alt="{{ config('app.name') }}"
+         class="hidden dark:block {{ $class }}"
+         width="40" height="40">
 @endif

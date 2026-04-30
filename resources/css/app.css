@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Smooth theme transitions (avoids jarring flash on switch) ── */
+*, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+}
+
 /* Hide Alpine x-cloak elements until Alpine initialises */
 [x-cloak] { display: none !important; }
 
@@ -71,10 +78,18 @@
         overflow: hidden;
         border: 1px solid #f3f4f6;
         box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-        transition: box-shadow 0.3s ease;
+        transition: box-shadow 0.3s ease, background-color 150ms ease, border-color 150ms ease;
     }
     .listing-card:hover {
         box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    /* Dark mode overrides */
+    .dark .listing-card {
+        background: #1f2937; /* gray-800 */
+        border-color: #374151; /* gray-700 */
+    }
+    .dark .listing-card:hover {
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.4);
     }
     .listing-card-image {
         position: relative;
@@ -82,6 +97,9 @@
         aspect-ratio: 4 / 3;
         background: #f3f4f6;
         flex-shrink: 0;
+    }
+    .dark .listing-card-image {
+        background: #374151; /* gray-700 */
     }
     .listing-card-image img {
         width: 100%;

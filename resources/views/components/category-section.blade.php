@@ -2,7 +2,7 @@
 
 <section>
     <div class="flex items-center justify-between mb-5">
-        <h2 class="text-xl font-bold text-gray-900">{{ $category->name }}</h2>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ $category->name }}</h2>
         @if ($seeAllRoute)
             <a href="{{ $seeAllRoute }}"
                class="text-sm font-medium text-rose-500 hover:text-rose-600 flex items-center gap-1">

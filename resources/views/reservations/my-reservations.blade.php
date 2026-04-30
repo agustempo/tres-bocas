@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('ui.my_reservations') }}</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-100">{{ __('ui.my_reservations') }}</h2>
     </x-slot>
 
     <div class="py-8">
@@ -9,7 +9,7 @@
 
             {{-- Flash messages --}}
             @if (session('success'))
-                <div class="flex items-start gap-3 p-4 mb-6 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm">
+                <div class="flex items-start gap-3 p-4 mb-6 bg-green-50 border border-green-200 text-green-800 rounded-xl text-sm dark:bg-green-900/20 dark:border-green-800 dark:text-green-300">
                     <svg class="w-5 h-5 shrink-0 text-green-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -17,7 +17,7 @@
                 </div>
             @endif
             @if (session('error'))
-                <div class="flex items-start gap-3 p-4 mb-6 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm">
+                <div class="flex items-start gap-3 p-4 mb-6 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
                     <svg class="w-5 h-5 shrink-0 text-red-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z"/>
                     </svg>
@@ -26,29 +26,29 @@
             @endif
 
             {{-- Tabs --}}
-            <div class="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+            <div class="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit dark:bg-gray-800">
                 <button @click="tab = 'bookings'"
                         :class="tab === 'bookings'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'"
+                            ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150">
                     {{ __('ui.my_bookings') }}
                     @if ($asCustomer->isNotEmpty())
-                        <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full"
-                              :class="tab === 'bookings' ? 'bg-indigo-100 text-indigo-700' : ''">
+                        <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-gray-300"
+                              :class="tab === 'bookings' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : ''">
                             {{ $asCustomer->count() }}
                         </span>
                     @endif
                 </button>
                 <button @click="tab = 'incoming'"
                         :class="tab === 'incoming'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'"
+                            ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
                         class="px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150">
                     {{ __('ui.incoming') }}
                     @if ($asProvider->isNotEmpty())
-                        <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full"
-                              :class="tab === 'incoming' ? 'bg-indigo-100 text-indigo-700' : ''">
+                        <span class="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-gray-300"
+                              :class="tab === 'incoming' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : ''">
                             {{ $asProvider->count() }}
                         </span>
                     @endif
@@ -58,14 +58,14 @@
             {{-- ── MY BOOKINGS (as customer) ── --}}
             <div x-show="tab === 'bookings'" x-cloak>
                 @if ($asCustomer->isEmpty())
-                    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-gray-800">
+                            <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
-                        <p class="text-gray-500 text-sm">{{ __('ui.no_bookings_yet') }}</p>
+                        <p class="text-gray-500 text-sm dark:text-gray-400">{{ __('ui.no_bookings_yet') }}</p>
                         <a href="{{ route('listings.index') }}"
                            class="inline-block mt-4 px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700">
                             {{ __('ui.browse_listings') }}
@@ -74,10 +74,10 @@
                 @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach ($asCustomer as $res)
-                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col dark:bg-gray-900 dark:border-gray-800 dark:shadow-black/20">
 
                                 {{-- Cover image --}}
-                                <div class="relative h-44 bg-gray-100 shrink-0">
+                                <div class="relative h-44 bg-gray-100 shrink-0 dark:bg-gray-800">
                                     @if ($res->listing->media->isNotEmpty())
                                         <img src="{{ asset('storage/' . $res->listing->media->first()->path) }}"
                                              alt="{{ $res->listing->title }}"
@@ -116,11 +116,11 @@
                                 {{-- Card body --}}
                                 <div class="p-4 flex flex-col flex-1">
                                     <a href="{{ route('listings.show', $res->listing) }}"
-                                       class="text-base font-semibold text-gray-900 hover:text-indigo-600 leading-snug mb-1">
+                                       class="text-base font-semibold text-gray-900 hover:text-indigo-600 leading-snug mb-1 dark:text-gray-100">
                                         {{ $res->listing->title }}
                                     </a>
 
-                                    <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1">
+                                    <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1 dark:text-gray-400">
                                         <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -129,7 +129,7 @@
                                     </div>
 
                                     @if ($res->scheduled_at)
-                                        <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1">
+                                        <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1 dark:text-gray-400">
                                             <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -139,7 +139,7 @@
                                     @endif
 
                                     @if ($res->notes)
-                                        <p class="text-xs text-gray-400 italic mt-1 line-clamp-2">{{ $res->notes }}</p>
+                                        <p class="text-xs text-gray-400 italic mt-1 line-clamp-2 dark:text-gray-500">{{ $res->notes }}</p>
                                     @endif
 
                                     @if ($res->status === 'completed')
@@ -161,22 +161,22 @@
             {{-- ── INCOMING RESERVATIONS (as provider) ── --}}
             <div x-show="tab === 'incoming'" x-cloak>
                 @if ($asProvider->isEmpty())
-                    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 dark:bg-gray-800">
+                            <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
                             </svg>
                         </div>
-                        <p class="text-gray-500 text-sm">{{ __('ui.no_incoming_yet') }}</p>
+                        <p class="text-gray-500 text-sm dark:text-gray-400">{{ __('ui.no_incoming_yet') }}</p>
                     </div>
                 @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach ($asProvider as $res)
-                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col dark:bg-gray-900 dark:border-gray-800 dark:shadow-black/20">
 
                                 {{-- Cover image --}}
-                                <div class="relative h-44 bg-gray-100 shrink-0">
+                                <div class="relative h-44 bg-gray-100 shrink-0 dark:bg-gray-800">
                                     @if ($res->listing->media->isNotEmpty())
                                         <img src="{{ asset('storage/' . $res->listing->media->first()->path) }}"
                                              alt="{{ $res->listing->title }}"
@@ -214,11 +214,11 @@
                                 {{-- Card body --}}
                                 <div class="p-4 flex flex-col flex-1">
                                     <a href="{{ route('listings.show', $res->listing) }}"
-                                       class="text-base font-semibold text-gray-900 hover:text-indigo-600 leading-snug mb-1">
+                                       class="text-base font-semibold text-gray-900 hover:text-indigo-600 leading-snug mb-1 dark:text-gray-100">
                                         {{ $res->listing->title }}
                                     </a>
 
-                                    <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1">
+                                    <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1 dark:text-gray-400">
                                         <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -227,7 +227,7 @@
                                     </div>
 
                                     @if ($res->scheduled_at)
-                                        <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1">
+                                        <div class="flex items-center gap-1.5 text-sm text-gray-500 mb-1 dark:text-gray-400">
                                             <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -237,7 +237,7 @@
                                     @endif
 
                                     @if ($res->notes)
-                                        <p class="text-xs text-gray-400 italic mt-1 line-clamp-2">{{ $res->notes }}</p>
+                                        <p class="text-xs text-gray-400 italic mt-1 line-clamp-2 dark:text-gray-500">{{ $res->notes }}</p>
                                     @endif
 
                                     {{-- Provider actions --}}
@@ -270,7 +270,7 @@
                                                 <button type="submit"
                                                         onclick="return confirm('{{ __('ui.cancel_reservation_confirm') }}')"
                                                         class="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-600
-                                                               hover:text-red-600 text-sm font-semibold rounded-xl transition-colors">
+                                                               hover:text-red-600 text-sm font-semibold rounded-xl transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400">
                                                     {{ __('ui.cancel') }}
                                                 </button>
                                             </form>

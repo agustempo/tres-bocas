@@ -2,6 +2,19 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
+
+        {{-- ── Anti-FOUC: aplica dark class ANTES de cualquier render ── --}}
+        <script>
+            (function () {
+                try {
+                    var t = localStorage.getItem('theme') || 'system';
+                    var d = t === 'dark' ||
+                            (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (d) document.documentElement.classList.add('dark');
+                } catch (e) {}
+            })();
+        </script>
+
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -32,16 +45,17 @@
         </script>
         @endproduction
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50">
+    <body class="font-sans text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50 dark:bg-gray-950">
             <div class="mb-6">
                 <a href="/" class="flex flex-col items-center gap-3">
                     <x-logo variant="icon" class="h-24 w-24" />
-                    <span class="text-xl font-bold tracking-wide text-[#147a72]">Isla.Ar</span>
+                    <span class="text-xl font-bold tracking-wide text-[#147a72] dark:text-teal-400">Isla.Ar</span>
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md px-6 py-6 bg-white shadow-md overflow-hidden sm:rounded-2xl">
+            <div class="w-full sm:max-w-md px-6 py-6 bg-white dark:bg-gray-900 shadow-md dark:shadow-black/30
+                        overflow-hidden sm:rounded-2xl border border-transparent dark:border-gray-800">
                 {{ $slot }}
             </div>
         </div>

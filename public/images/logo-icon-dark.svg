@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 530" fill="none">
+  <g stroke="#2dd4bf" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Techo / Roof -->
+    <polyline points="88,214 256,46 424,214" stroke-width="28"/>
+    <!-- Cuerpo de la casa / House body -->
+    <rect x="130" y="214" width="252" height="134" stroke-width="26"/>
+    <!-- Puerta / Door -->
+    <rect x="218" y="272" width="76" height="76" stroke-width="22"/>
+    <!-- Plataforma / Platform -->
+    <line x1="76"  y1="362" x2="436" y2="362" stroke-width="44"/>
+    <!-- Post izquierdo -->
+    <line x1="76"  y1="338" x2="76"  y2="386" stroke-width="28"/>
+    <!-- Post derecho -->
+    <line x1="436" y1="338" x2="436" y2="386" stroke-width="28"/>
+    <!-- Pilotes / Stilts -->
+    <line x1="152" y1="384" x2="152" y2="448" stroke-width="24"/>
+    <line x1="216" y1="384" x2="216" y2="448" stroke-width="24"/>
+    <line x1="294" y1="384" x2="294" y2="448" stroke-width="24"/>
+    <line x1="358" y1="384" x2="358" y2="448" stroke-width="24"/>
+    <!-- Escalera / Ladder -->
+    <line x1="394" y1="384" x2="394" y2="452" stroke-width="22"/>
+    <line x1="436" y1="384" x2="436" y2="452" stroke-width="22"/>
+    <line x1="394" y1="404" x2="436" y2="404" stroke-width="19"/>
+    <line x1="394" y1="424" x2="436" y2="424" stroke-width="19"/>
+    <line x1="394" y1="444" x2="436" y2="444" stroke-width="19"/>
+    <!-- Ola 1 / Wave 1 -->
+    <path d="M 54,468 Q 84,452 114,468 Q 144,484 174,468 Q 204,452 234,468
+             Q 264,484 294,468 Q 324,452 354,468 Q 384,484 414,468 Q 444,452 458,468"
+          stroke-width="23" fill="none"/>
+    <!-- Ola 2 / Wave 2 -->
+    <path d="M 54,502 Q 84,486 114,502 Q 144,518 174,502 Q 204,486 234,502
+             Q 264,518 294,502 Q 324,486 354,502 Q 384,518 414,502 Q 444,486 458,502"
+          stroke-width="20" fill="none"/>
+  </g>
+</svg>

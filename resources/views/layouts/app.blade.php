@@ -2,6 +2,19 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
+
+        {{-- ── Anti-FOUC: aplica dark class ANTES de cualquier render ── --}}
+        <script>
+            (function () {
+                try {
+                    var t = localStorage.getItem('theme') || 'system';
+                    var d = t === 'dark' ||
+                            (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    if (d) document.documentElement.classList.add('dark');
+                } catch (e) {}
+            })();
+        </script>
+
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -32,7 +45,7 @@
         </script>
         @endproduction
     </head>
-    <body class="font-sans antialiased bg-white text-gray-900">
+    <body class="font-sans antialiased bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
 
         @include('layouts.navigation')
 
