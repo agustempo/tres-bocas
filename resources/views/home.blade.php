@@ -2,7 +2,7 @@
 
     <div class="bg-white min-h-screen overflow-x-hidden dark:bg-gray-900">
 
-        {{-- ── HERO ── --}}
+        <!-- {{-- ── HERO ── --}}
         <div class="bg-gradient-to-br from-rose-50 via-white to-indigo-50 border-b border-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 dark:border-gray-800">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 text-center">
                 <h1 class="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-2 dark:text-gray-100">
@@ -12,7 +12,7 @@
                     {{ __('ui.find_services_sub') }}
                 </p>
             </div>
-        </div>
+        </div> -->
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
