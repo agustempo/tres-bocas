@@ -154,14 +154,6 @@
 
         </div>
 
-        @else
-        {{-- Failsafe: weather unavailable but tides still show fine --}}
-        <div class="rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3
-                    dark:border-gray-800 dark:bg-gray-800/50">
-            <p class="text-sm text-gray-400 dark:text-gray-500 italic">
-                ⛅ {{ __('ui.weather_unavailable') }}
-            </p>
-        </div>
         @endif
 
         {{-- ── 1. STATUS CARD ── --}}
