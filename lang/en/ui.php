@@ -164,4 +164,10 @@ return [
     'weather_unavailable'    => 'Weather data temporarily unavailable.',
     'weather_next_6h'        => 'Next 6 hours',
     'weather_source'         => 'Weather forecast — Open-Meteo',
+
+    // ── Listings empty state ─────────────────────────────────────────────────
+    'listings_empty_soon'      => 'Coming soon',
+    'listings_empty_primary'   => 'We\'re working to bring you services and accommodation on the island very soon.',
+    'listings_empty_secondary' => 'Soon you\'ll be able to explore local options, contact providers and plan your stay.',
+    'listings_empty_cta'       => 'If you offer a service or accommodation, you\'ll be able to list it here soon.',
 ];

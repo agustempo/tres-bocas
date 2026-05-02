@@ -164,4 +164,10 @@ return [
     'weather_unavailable'    => 'Dados meteorológicos temporariamente indisponíveis.',
     'weather_next_6h'        => 'Próximas 6 horas',
     'weather_source'         => 'Previsão do tempo — Open-Meteo',
+
+    // ── Listings empty state ─────────────────────────────────────────────────
+    'listings_empty_soon'      => 'Em breve',
+    'listings_empty_primary'   => 'Estamos trabalhando para que em breve você encontre aqui serviços e acomodações na ilha.',
+    'listings_empty_secondary' => 'Em breve você poderá explorar opções locais, contatar prestadores e planejar sua estadia.',
+    'listings_empty_cta'       => 'Se você oferece um serviço ou acomodação, em breve poderá publicá-lo aqui.',
 ];

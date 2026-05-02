@@ -70,14 +70,18 @@
 
             {{-- ── SECTIONS BY CATEGORY (default view) ── --}}
             @else
-                <div class="py-8 space-y-12">
-                    @foreach ($categories as $category)
-                        <x-category-section
-                            :category="$category"
-                            :see-all-route="route('home', ['category' => $category->slug])"
-                        />
-                    @endforeach
-                </div>
+                @if ($categories->isEmpty())
+                    <x-listings-empty-state />
+                @else
+                    <div class="py-8 space-y-12">
+                        @foreach ($categories as $category)
+                            <x-category-section
+                                :category="$category"
+                                :see-all-route="route('home', ['category' => $category->slug])"
+                            />
+                        @endforeach
+                    </div>
+                @endif
             @endif
 
         </div>
