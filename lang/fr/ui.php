@@ -134,6 +134,23 @@ return [
     'location_gps_timeout'    => 'La demande de localisation a expiré. Placez le repère manuellement.',
     'location_gps_error'      => 'Impossible d\'obtenir votre position. Placez le repère manuellement.',
 
+    // ── Tide status labels & messages ────────────────────────────────────────
+    'tide_label_very_high' => 'MARÉE TRÈS HAUTE',
+    'tide_label_high'      => 'MARÉE HAUTE',
+    'tide_label_attention' => 'ATTENTION',
+    'tide_label_normal'    => 'NORMAL',
+    'tide_label_low'       => 'EAU BASSE',
+    'tide_label_very_low'  => 'TRÈS PEU D\'EAU',
+    'tide_msg_very_high'   => "L'eau recouvre le terrain.\nVous risquez de vous mouiller en marchant.",
+    'tide_msg_high'        => "Le niveau de l'eau est élevé.\nMarcher peut être difficile.",
+    'tide_msg_attention'   => "L'eau monte.\nRestez vigilant.",
+    'tide_msg_normal'      => 'Conditions normales pour marcher et naviguer.',
+    'tide_msg_low'         => 'La navigation peut être limitée.',
+    'tide_msg_very_low'    => "La navigation est difficile.\nRisque d'échouage.",
+    'tide_trend_rising'    => 'Montante',
+    'tide_trend_falling'   => 'Descendante',
+    'tide_trend_stable'    => 'Stable',
+
     // ── Marea page ───────────────────────────────────────────────────────────
     'marea_title'            => 'Marées',
     'tide_status_heading'    => 'État de la marée',
@@ -163,6 +180,12 @@ return [
     'weather_summary'        => 'Météo',
     'weather_unavailable'    => 'Données météo temporairement indisponibles.',
     'weather_next_6h'        => '6 prochaines heures',
+    'weather_feels_like'     => 'Ressenti',
+    'weather_humidity'       => 'Humidité',
+    'weather_clouds'         => 'Nuages',
+    'weather_next_hours'     => 'Prochaines heures',
+    'weather_strong_wind'    => 'Vent fort',
+    'weather_rain'           => 'Pluie',
     'weather_source'         => 'Prévisions météo — Open-Meteo',
 
     // ── Listings empty state ─────────────────────────────────────────────────

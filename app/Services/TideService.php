@@ -361,7 +361,7 @@ class TideService
     private function resolveTrend(?array $hourly, ?array $current): string
     {
         if (empty($hourly) || $current === null || count($hourly) < 2) {
-            return 'Estable';
+            return 'stable';
         }
 
         // Find the index of the current entry
@@ -374,7 +374,7 @@ class TideService
         }
 
         if ($index === null || $index === 0) {
-            return 'Estable';
+            return 'stable';
         }
 
         $prev    = (float) $hourly[$index - 1]['level'];
@@ -382,12 +382,12 @@ class TideService
         $delta   = $current - $prev;
 
         if ($delta > 0.03) {
-            return 'Subiendo';
+            return 'rising';
         }
         if ($delta < -0.03) {
-            return 'Bajando';
+            return 'falling';
         }
-        return 'Estable';
+        return 'stable';
     }
 
     /**
@@ -409,36 +409,12 @@ class TideService
     private function classifyLevel(float $level): array
     {
         return match (true) {
-            $level >= 2.20 => [
-                'label'   => 'MAREA MUY ALTA',
-                'color'   => 'red',
-                'message' => "Hay agua sobre el terreno.\nEs probable que te mojes al caminar.",
-            ],
-            $level >= 2.00 => [
-                'label'   => 'MAREA ALTA',
-                'color'   => 'orange',
-                'message' => "El nivel del agua es alto.\nCaminar puede ser incómodo.",
-            ],
-            $level >= 1.70 => [
-                'label'   => 'ATENCIÓN',
-                'color'   => 'yellow',
-                'message' => "El agua está subiendo.\nConviene estar atento.",
-            ],
-            $level >= 0.70 => [
-                'label'   => 'NORMAL',
-                'color'   => 'green',
-                'message' => 'Condiciones normales para caminar y navegar.',
-            ],
-            $level >= 0.40 => [
-                'label'   => 'POCA AGUA',
-                'color'   => 'yellow',
-                'message' => 'La navegación puede ser limitada.',
-            ],
-            default => [
-                'label'   => 'MUY POCA AGUA',
-                'color'   => 'red',
-                'message' => "La navegación es difícil.\nHay riesgo de encallar.",
-            ],
+            $level >= 2.20 => ['label' => 'tide_label_very_high', 'color' => 'red',    'message' => 'tide_msg_very_high'],
+            $level >= 2.00 => ['label' => 'tide_label_high',      'color' => 'orange', 'message' => 'tide_msg_high'],
+            $level >= 1.70 => ['label' => 'tide_label_attention', 'color' => 'yellow', 'message' => 'tide_msg_attention'],
+            $level >= 0.70 => ['label' => 'tide_label_normal',    'color' => 'green',  'message' => 'tide_msg_normal'],
+            $level >= 0.40 => ['label' => 'tide_label_low',       'color' => 'yellow', 'message' => 'tide_msg_low'],
+            default        => ['label' => 'tide_label_very_low',  'color' => 'red',    'message' => 'tide_msg_very_low'],
         };
     }
 }

@@ -134,6 +134,23 @@ return [
     'location_gps_timeout'    => 'La solicitud de ubicación tardó demasiado. Colocá el marcador manualmente.',
     'location_gps_error'      => 'No se pudo obtener tu ubicación. Colocá el marcador manualmente.',
 
+    // ── Tide status labels & messages ────────────────────────────────────────
+    'tide_label_very_high' => 'MAREA MUY ALTA',
+    'tide_label_high'      => 'MAREA ALTA',
+    'tide_label_attention' => 'ATENCIÓN',
+    'tide_label_normal'    => 'NORMAL',
+    'tide_label_low'       => 'POCA AGUA',
+    'tide_label_very_low'  => 'MUY POCA AGUA',
+    'tide_msg_very_high'   => "Hay agua sobre el terreno.\nEs probable que te mojes al caminar.",
+    'tide_msg_high'        => "El nivel del agua es alto.\nCaminar puede ser incómodo.",
+    'tide_msg_attention'   => "El agua está subiendo.\nConviene estar atento.",
+    'tide_msg_normal'      => 'Condiciones normales para caminar y navegar.',
+    'tide_msg_low'         => 'La navegación puede ser limitada.',
+    'tide_msg_very_low'    => "La navegación es difícil.\nHay riesgo de encallar.",
+    'tide_trend_rising'    => 'Subiendo',
+    'tide_trend_falling'   => 'Bajando',
+    'tide_trend_stable'    => 'Estable',
+
     // ── Marea page ───────────────────────────────────────────────────────────
     'marea_title'            => 'Marea',
     'tide_status_heading'    => 'Estado de la marea',
@@ -163,6 +180,12 @@ return [
     'weather_summary'        => 'Tiempo',
     'weather_unavailable'    => 'Datos del tiempo temporalmente no disponibles.',
     'weather_next_6h'        => 'Próximas 6 horas',
+    'weather_feels_like'     => 'Sensación',
+    'weather_humidity'       => 'Humedad',
+    'weather_clouds'         => 'Nubosidad',
+    'weather_next_hours'     => 'Próximas horas',
+    'weather_strong_wind'    => 'Viento fuerte',
+    'weather_rain'           => 'Lluvia',
     'weather_source'         => 'Pronóstico del tiempo — Open-Meteo',
 
     // ── Listings empty state ─────────────────────────────────────────────────

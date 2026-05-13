@@ -77,11 +77,11 @@ class WeatherService
             $response = Http::timeout(10)->get(self::API_URL, [
                 'latitude'        => self::LATITUDE,
                 'longitude'       => self::LONGITUDE,
-                'current'         => 'temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m',
-                'hourly'          => 'temperature_2m,precipitation_probability,weather_code',
+                'current'         => 'temperature_2m,apparent_temperature,relative_humidity_2m,cloud_cover,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
+                'hourly'          => 'temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m',
                 'wind_speed_unit' => 'kmh',
                 'timezone'        => self::TZ,
-                'forecast_days'   => 2,
+                'forecast_days'   => 3,
             ]);
 
             if (! $response->successful()) {
@@ -104,49 +104,84 @@ class WeatherService
                 return $this->errorResult();
             }
 
-            $condition = $this->decodeWmo($wcode);
+            $feelsLike  = $cur['apparent_temperature']  ?? null;
+            $humidity   = $cur['relative_humidity_2m']  ?? null;
+            $cloudCover = $cur['cloud_cover']           ?? null;
+            $gusts      = $cur['wind_gusts_10m']        ?? null;
 
-            // ── Next 6 hourly slots from now ────────────────────────────────
+            $condition     = $this->decodeWmo($wcode);
+            $conditionType = $this->wmoToConditionType($wcode);
+
+            // ── Hourly forecast grouped by day (3 days) ─────────────────────
             $hourly = $json['hourly'] ?? [];
-            $times  = $hourly['time']                     ?? [];
-            $hTemps = $hourly['temperature_2m']           ?? [];
+            $times  = $hourly['time']                      ?? [];
+            $hTemps = $hourly['temperature_2m']            ?? [];
             $hRains = $hourly['precipitation_probability'] ?? [];
-            $hCodes = $hourly['weather_code']             ?? [];
+            $hCodes = $hourly['weather_code']              ?? [];
+            $hWinds = $hourly['wind_speed_10m']            ?? [];
+            $hDirs  = $hourly['wind_direction_10m']        ?? [];
 
-            $now   = Carbon::now(self::TZ);
-            $cards = [];
+            $now     = Carbon::now(self::TZ);
+            $grouped = [];
 
             foreach ($times as $i => $timeStr) {
-                $dt = Carbon::parse($timeStr, self::TZ);
+                $dt   = Carbon::parse($timeStr, self::TZ);
+                $date = $dt->toDateString();
+
                 if ($dt->lte($now)) {
                     continue;
                 }
-                $cond    = $this->decodeWmo((int) ($hCodes[$i] ?? 0));
-                $cards[] = [
-                    'hour'      => $dt->format('H:i'),
-                    'temp'      => (int) round($hTemps[$i] ?? 0),
-                    'rain'      => (int) round($hRains[$i] ?? 0),
-                    'emoji'     => $cond['emoji'],
-                    'condition' => $cond['label'],
-                ];
-                if (count($cards) >= 6) {
+                if ($dt->gt($now->copy()->addDays(3)->startOfDay())) {
                     break;
                 }
+
+                $cond = $this->decodeWmo((int) ($hCodes[$i] ?? 0));
+
+                $grouped[$date][] = [
+                    'hour'       => $dt->format('H:i'),
+                    'temp'       => (int) round($hTemps[$i] ?? 0),
+                    'rain'       => (int) round($hRains[$i] ?? 0),
+                    'wind_speed' => (int) round($hWinds[$i] ?? 0),
+                    'wind_dir'   => (int) ($hDirs[$i] ?? 0),
+                    'emoji'      => $cond['emoji'],
+                    'condition'  => $cond['label'],
+                ];
+            }
+
+            $dayGroups = [];
+            $dayOffset = 0;
+            foreach ($grouped as $date => $hours) {
+                $dt       = Carbon::parse($date, self::TZ);
+                $dayLabel = match ($dayOffset) {
+                    0       => 'Hoy',
+                    1       => 'Mañana',
+                    default => $dt->locale('es')->isoFormat('dddd D'),
+                };
+                $dayGroups[] = [
+                    'day_label' => ucfirst($dayLabel),
+                    'date'      => $date,
+                    'hours'     => $hours,
+                ];
+                $dayOffset++;
             }
 
             return [
-                'available'   => true,
-                'temperature' => (int) round($temp),
-                'rain'        => (int) round($rain),
-                'condition'   => $condition['label'],
-                'emoji'       => $condition['emoji'],
-                'hourly'      => $cards,
-                // Wind sub-array — same shape WindService returns for backward compat
+                'available'      => true,
+                'temperature'    => (int) round($temp),
+                'feels_like'     => $feelsLike  !== null ? (int) round($feelsLike)  : null,
+                'humidity'       => $humidity   !== null ? (int) round($humidity)   : null,
+                'cloud_cover'    => $cloudCover !== null ? (int) round($cloudCover) : null,
+                'rain'           => (int) round($rain),
+                'condition'      => $condition['label'],
+                'emoji'          => $condition['emoji'],
+                'condition_type' => $conditionType,
+                'hourly'         => $dayGroups,
                 'wind' => [
                     'available'     => true,
                     'speed'         => (int) round($wspd ?? 0),
                     'direction_deg' => (int) ($wdir ?? 0),
                     'direction'     => $this->degreeToCardinal((int) ($wdir ?? 0)),
+                    'gusts'         => $gusts !== null ? (int) round($gusts) : null,
                 ],
             ];
 
@@ -179,20 +214,38 @@ class WeatherService
         };
     }
 
+    private function wmoToConditionType(int $code): string
+    {
+        return match (true) {
+            in_array($code, [0, 1])    => 'clear',
+            $code === 2                => 'partly_cloudy',
+            $code === 3                => 'cloudy',
+            in_array($code, [45, 48]) => 'fog',
+            $code >= 51 && $code <= 82 => 'rain',
+            $code >= 95 && $code <= 99 => 'storm',
+            default                    => 'cloudy',
+        };
+    }
+
     private function errorResult(): array
     {
         return [
-            'available'   => false,
-            'temperature' => null,
-            'rain'        => null,
-            'condition'   => null,
-            'emoji'       => null,
-            'hourly'      => [],
-            'wind'        => [
+            'available'      => false,
+            'temperature'    => null,
+            'feels_like'     => null,
+            'humidity'       => null,
+            'cloud_cover'    => null,
+            'rain'           => null,
+            'condition'      => null,
+            'emoji'          => null,
+            'condition_type' => 'cloudy',
+            'hourly'         => [],
+            'wind'           => [
                 'available'     => false,
                 'speed'         => null,
                 'direction_deg' => null,
                 'direction'     => null,
+                'gusts'         => null,
             ],
         ];
     }

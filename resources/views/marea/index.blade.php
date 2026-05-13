@@ -2,25 +2,6 @@
 
 <div class="bg-white min-h-screen dark:bg-gray-900">
 
-    {{-- ── HEADER ── --}}
-    <div class="bg-gradient-to-br from-blue-50 via-white to-cyan-50 border-b border-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 dark:border-gray-800">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-            <div class="flex items-center gap-3 mb-1">
-                <span class="text-3xl leading-none">🌊</span>
-                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight dark:text-gray-100">{{ __('ui.marea_title') }}</h1>
-            </div>
-            <p class="text-gray-500 text-sm ml-11 dark:text-gray-400">San Fernando &mdash; Delta del Paraná</p>
-
-            @if($tide['updated_at'])
-                <p class="text-xs text-gray-400 mt-2 ml-11 dark:text-gray-500">
-                    {{ __('ui.last_updated') }} <span class="font-semibold text-gray-500 dark:text-gray-400">{{ $tide['updated_at'] }}</span>
-                    <span class="text-gray-300 mx-1 dark:text-gray-600">·</span>
-                    <a href="{{ route('marea.index') }}" class="text-blue-500 hover:underline">{{ __('ui.update_link') }}</a>
-                </p>
-            @endif
-        </div>
-    </div>
-
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {{-- ── ERROR STATE ── --}}
@@ -41,111 +22,241 @@
 
 
         {{-- ── WEATHER SUMMARY ── --}}
-        @php $weather = $tide['weather'] ?? ['available' => false, 'hourly' => []]; @endphp
+        @php
+            $weather = $tide['weather'] ?? ['available' => false, 'hourly' => []];
+
+            $condBg = [
+                'clear'         => 'bg-gradient-to-br from-amber-50/60 to-orange-50/40 dark:from-amber-900/10 dark:to-orange-900/5',
+                'partly_cloudy' => 'bg-gradient-to-br from-sky-50/50 to-blue-50/30 dark:from-sky-900/10 dark:to-blue-900/5',
+                'cloudy'        => 'bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800 dark:to-gray-900',
+                'fog'           => 'bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900',
+                'rain'          => 'bg-gradient-to-br from-blue-50/60 to-cyan-50/40 dark:from-blue-900/10 dark:to-cyan-900/5',
+                'storm'         => 'bg-gradient-to-br from-slate-100 to-gray-100 dark:from-slate-800 dark:to-gray-900',
+            ];
+
+            $ct      = $weather['condition_type'] ?? 'cloudy';
+            $bgClass = $condBg[$ct] ?? $condBg['cloudy'];
+
+            $windSpeed  = $weather['wind']['speed'] ?? 0;
+            $windClass  = match(true) {
+                $windSpeed >= 50 => 'text-red-500 dark:text-red-400',
+                $windSpeed >= 30 => 'text-amber-500 dark:text-amber-400',
+                default          => 'text-gray-600 dark:text-gray-300',
+            };
+            $arrowClass = match(true) {
+                $windSpeed >= 50 => 'text-red-500',
+                $windSpeed >= 30 => 'text-amber-500',
+                default          => 'text-blue-400',
+            };
+            $rainColor = ($weather['rain'] ?? 0) >= 60
+                ? 'text-blue-600 dark:text-blue-400'
+                : (($weather['rain'] ?? 0) >= 30
+                    ? 'text-blue-500 dark:text-blue-400'
+                    : 'text-gray-500 dark:text-gray-400');
+        @endphp
 
         @if($weather['available'])
         <div x-data="{ open: false }"
-             class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden
-                    dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/20">
+             class="rounded-2xl border border-gray-100 shadow-sm overflow-hidden
+                    dark:border-gray-800 dark:shadow-black/20 {{ $bgClass }}">
 
-            {{-- ── Summary row (always visible, tappable to expand) ── --}}
-            <button @click="open = !open"
-                    class="w-full flex items-center gap-3 px-5 py-4 text-left select-none
-                           hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition-colors">
+            {{-- ── Part 1: Current conditions (always visible) ── --}}
+            <div class="px-5 pt-5 pb-4">
 
-                {{-- Condition emoji --}}
-                <span class="text-2xl leading-none shrink-0" aria-hidden="true">{{ $weather['emoji'] }}</span>
+                {{-- Responsive: stacked on mobile, side-by-side on sm+ --}}
+                <div class="flex flex-col sm:flex-row sm:items-center sm:gap-6">
 
-                {{-- Data pills --}}
-                <div class="flex-1 flex flex-wrap items-center gap-x-5 gap-y-1 min-w-0">
-
-                    {{-- Temperature --}}
-                    <span class="text-base font-bold tabular-nums text-gray-800 dark:text-gray-100">
-                        {{ $weather['temperature'] }}°C
+                {{-- Left: emoji + temp + condition + feels-like --}}
+                <div class="flex items-start gap-4 sm:shrink-0">
+                    <span class="text-5xl leading-none shrink-0 mt-1" aria-hidden="true">
+                        {{ $weather['emoji'] }}
                     </span>
+                    <div class="min-w-0">
+                        <div class="flex items-baseline gap-1 flex-wrap">
+                            <span class="text-5xl font-black tabular-nums leading-none text-gray-900 dark:text-gray-50">
+                                {{ $weather['temperature'] }}°
+                            </span>
+                            <span class="text-2xl font-light text-gray-400 dark:text-gray-500">C</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-300 mt-1">
+                            {{ $weather['condition'] }}
+                        </p>
+                        @if(isset($weather['feels_like']))
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                            {{ __('ui.weather_feels_like') }}: {{ $weather['feels_like'] }}°C
+                        </p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Divider: horizontal on mobile, vertical on sm+ --}}
+                <div class="border-t border-black/5 dark:border-white/5 my-3 sm:hidden"></div>
+                <div class="hidden sm:block self-stretch border-l border-black/5 dark:border-white/5 mx-1"></div>
+
+                {{-- Stats: wind | rain | humidity | clouds --}}
+                <div class="flex-1 grid grid-cols-4 gap-1 text-center">
 
                     {{-- Wind --}}
                     @if($weather['wind']['available'])
-                    <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                        <span aria-hidden="true">💨</span>
-                        {{ $weather['wind']['direction'] }} {{ $weather['wind']['speed'] }} km/h
-                    </span>
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <svg style="transform: rotate({{ $weather['wind']['direction_deg'] }}deg)"
+                                 class="{{ $arrowClass }}"
+                                 viewBox="0 0 24 24" fill="currentColor" width="20" height="20"
+                                 aria-hidden="true">
+                                <path d="M12 2 L16 20 L12 17 L8 20 Z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-bold {{ $windClass }} tabular-nums leading-tight">
+                            {{ $windSpeed }}<span class="font-normal text-[10px]"> km/h</span>
+                        </span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                            {{ $weather['wind']['direction'] }}
+                        </span>
+                        @if($windSpeed >= 30)
+                        <span class="text-[10px] font-semibold {{ $arrowClass }} leading-tight">
+                            {{ __('ui.weather_strong_wind') }}
+                        </span>
+                        @endif
+                    </div>
+                    @else
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="text-xl">💨</span>
+                        <span class="text-xs text-gray-300 dark:text-gray-600">—</span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ __('ui.wind') }}</span>
+                    </div>
                     @endif
 
-                    {{-- Rain probability --}}
-                    @php
-                        $rainColor = $weather['rain'] >= 60
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : ($weather['rain'] >= 30
-                                ? 'text-blue-500 dark:text-blue-400'
-                                : 'text-gray-400 dark:text-gray-500');
-                    @endphp
-                    <span class="flex items-center gap-1 text-sm {{ $rainColor }}">
-                        <span aria-hidden="true">💧</span>
-                        {{ $weather['rain'] }}%
-                    </span>
+                    {{-- Rain --}}
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <span class="text-xl leading-none" aria-hidden="true">💧</span>
+                        </div>
+                        <span class="text-xs font-bold {{ $rainColor }} tabular-nums leading-tight">
+                            {{ $weather['rain'] }}%
+                        </span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                            {{ __('ui.weather_rain') }}
+                        </span>
+                    </div>
+
+                    {{-- Humidity --}}
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <span class="text-xl leading-none" aria-hidden="true">💦</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-300 tabular-nums leading-tight">
+                            {{ isset($weather['humidity']) ? $weather['humidity'].'%' : '—' }}
+                        </span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                            {{ __('ui.weather_humidity') }}
+                        </span>
+                    </div>
+
+                    {{-- Clouds --}}
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-6 h-6 flex items-center justify-center">
+                            <span class="text-xl leading-none" aria-hidden="true">☁️</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-600 dark:text-gray-300 tabular-nums leading-tight">
+                            {{ isset($weather['cloud_cover']) ? $weather['cloud_cover'].'%' : '—' }}
+                        </span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">
+                            {{ __('ui.weather_clouds') }}
+                        </span>
+                    </div>
 
                 </div>
+                </div>{{-- end sm:flex-row --}}
+            </div>
 
-                {{-- Condition label (desktop) + expand chevron --}}
-                <div class="shrink-0 flex items-center gap-2">
-                    <span class="hidden sm:block text-xs text-gray-400 dark:text-gray-500">
-                        {{ $weather['condition'] }}
-                    </span>
-                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200"
+            {{-- ── Part 2: 3-day hourly forecast (collapsible) ── --}}
+            @if(!empty($weather['hourly']))
+            <div class="border-t border-black/5 dark:border-white/5">
+
+                <button @click="open = !open"
+                        class="w-full flex items-center justify-between px-5 py-3 text-left
+                               text-xs font-semibold text-gray-500 dark:text-gray-400
+                               hover:bg-black/5 dark:hover:bg-white/5 transition-colors select-none">
+                    <span>{{ __('ui.weather_next_hours') }}</span>
+                    <svg class="w-4 h-4 shrink-0 transition-transform duration-200"
                          :class="open ? 'rotate-180' : ''"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
                          aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                     </svg>
-                </div>
+                </button>
 
-            </button>
+                <div x-show="open"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     style="display:none">
 
-            {{-- ── Hourly forecast (expandable) ── --}}
-            @if(!empty($weather['hourly']))
-            <div x-show="open"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 -translate-y-1"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 -translate-y-1"
-                 style="display:none">
+                    {{-- Single continuous horizontal scroll with inline day separators --}}
+                    <div class="border-t border-black/5 dark:border-white/5 px-5 py-4">
+                        <div class="flex items-start gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x scroll-smooth">
 
-                <div class="border-t border-gray-100 dark:border-gray-800 px-5 py-4">
+                            @foreach($weather['hourly'] as $dayGroup)
 
-                    <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
-                        {{ __('ui.weather_next_6h') }}
-                    </p>
+                            {{-- Day separator --}}
+                            <div class="snap-start shrink-0 flex flex-col items-center gap-1 px-1.5 py-2.5">
+                                <div class="w-px grow bg-black/10 dark:bg-white/10"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500
+                                             whitespace-nowrap"
+                                      style="writing-mode: vertical-lr; text-orientation: mixed; transform: rotate(180deg);">
+                                    {{ $dayGroup['day_label'] }}
+                                </span>
+                                <div class="w-px grow bg-black/10 dark:bg-white/10"></div>
+                            </div>
 
-                    {{-- Horizontal scroll row --}}
-                    <div class="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1
-                                snap-x snap-mandatory scroll-smooth">
-                        @foreach($weather['hourly'] as $hw)
-                        @php
-                            $cardRainColor = $hw['rain'] >= 60
-                                ? 'text-blue-500 dark:text-blue-400'
-                                : ($hw['rain'] >= 30
-                                    ? 'text-blue-400 dark:text-blue-500'
-                                    : 'text-gray-400 dark:text-gray-600');
-                        @endphp
-                        <div class="snap-start shrink-0 flex flex-col items-center gap-1.5
-                                    bg-gray-50 dark:bg-gray-800
-                                    border border-gray-100 dark:border-gray-700
-                                    rounded-2xl px-3.5 py-3 min-w-[72px]">
-                            <span class="text-xs font-semibold tabular-nums text-gray-500 dark:text-gray-400">
-                                {{ $hw['hour'] }}
-                            </span>
-                            <span class="text-xl leading-none" aria-hidden="true">{{ $hw['emoji'] }}</span>
-                            <span class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">
-                                {{ $hw['temp'] }}°
-                            </span>
-                            <span class="text-xs tabular-nums {{ $cardRainColor }}">
-                                💧 {{ $hw['rain'] }}%
-                            </span>
+                            @foreach($dayGroup['hours'] as $hw)
+                            @php
+                                $hwWind = $hw['wind_speed'] ?? 0;
+                                $hwWindClass = match(true) {
+                                    $hwWind >= 50 => 'text-red-400',
+                                    $hwWind >= 30 => 'text-amber-400',
+                                    default       => 'text-gray-400 dark:text-gray-500',
+                                };
+                                $hwRain = $hw['rain'] >= 60
+                                    ? 'text-blue-500 dark:text-blue-400'
+                                    : ($hw['rain'] >= 30
+                                        ? 'text-blue-400 dark:text-blue-500'
+                                        : 'text-gray-400 dark:text-gray-600');
+                            @endphp
+                            <div class="snap-start shrink-0 flex flex-col items-center gap-1
+                                        bg-white/50 dark:bg-gray-800/60
+                                        border border-black/5 dark:border-white/5
+                                        rounded-xl px-3 py-2.5 min-w-[68px]">
+                                <span class="text-xs font-semibold tabular-nums text-gray-500 dark:text-gray-400">
+                                    {{ $hw['hour'] }}
+                                </span>
+                                <span class="text-xl leading-none" aria-hidden="true">{{ $hw['emoji'] }}</span>
+                                <span class="text-sm font-bold tabular-nums text-gray-800 dark:text-gray-100">
+                                    {{ $hw['temp'] }}°
+                                </span>
+                                <span class="text-xs tabular-nums {{ $hwRain }}">
+                                    💧{{ $hw['rain'] }}%
+                                </span>
+                                @if($hwWind > 0)
+                                <span class="flex items-center gap-0.5 {{ $hwWindClass }}">
+                                    <svg style="transform: rotate({{ $hw['wind_dir'] }}deg)"
+                                         viewBox="0 0 24 24" fill="currentColor" width="10" height="10"
+                                         aria-hidden="true">
+                                        <path d="M12 2 L16 20 L12 17 L8 20 Z"/>
+                                    </svg>
+                                    <span class="text-[10px] tabular-nums">{{ $hwWind }}</span>
+                                </span>
+                                @endif
+                            </div>
+                            @endforeach
+
+                            @endforeach
+
                         </div>
-                        @endforeach
                     </div>
 
                 </div>
@@ -160,80 +271,131 @@
         @php
             $status  = $tide['status'];
             $current = $tide['current'];
-            $trend   = $tide['trend'] ?? 'Estable';
+            $trend   = $tide['trend'] ?? 'stable';
             $wind    = $tide['wind'] ?? ['available' => false];
 
             $colorMap = [
-                'red'    => ['bg' => 'bg-red-50 dark:bg-red-900/20',       'border' => 'border-red-200 dark:border-red-800',     'badge' => 'bg-red-500 text-white',    'level' => 'text-red-600',    'icon' => '🔴'],
-                'orange' => ['bg' => 'bg-orange-50 dark:bg-orange-900/20', 'border' => 'border-orange-200 dark:border-orange-800','badge' => 'bg-orange-500 text-white', 'level' => 'text-orange-600', 'icon' => '🟠'],
-                'yellow' => ['bg' => 'bg-yellow-50 dark:bg-yellow-900/20', 'border' => 'border-yellow-200 dark:border-yellow-800','badge' => 'bg-yellow-400 text-gray-900','level' => 'text-yellow-700','icon' => '🟡'],
-                'green'  => ['bg' => 'bg-green-50 dark:bg-green-900/20',   'border' => 'border-green-200 dark:border-green-800',  'badge' => 'bg-green-500 text-white',  'level' => 'text-green-700',  'icon' => '🟢'],
-                'gray'   => ['bg' => 'bg-gray-50 dark:bg-gray-800',        'border' => 'border-gray-200 dark:border-gray-700',    'badge' => 'bg-gray-400 text-white',   'level' => 'text-gray-600',   'icon' => '⚪'],
+                'red'    => ['bg' => 'bg-red-50 dark:bg-red-900/20',       'border' => 'border-red-200 dark:border-red-800',     'badge' => 'bg-red-500 text-white',    'level' => 'text-red-600',    'icon' => '🔴', 'msg' => 'text-gray-600 dark:text-gray-400'],
+                'orange' => ['bg' => 'bg-orange-50 dark:bg-orange-900/20', 'border' => 'border-orange-200 dark:border-orange-800','badge' => 'bg-orange-500 text-white', 'level' => 'text-orange-600', 'icon' => '🟠', 'msg' => 'text-gray-600 dark:text-gray-400'],
+                'yellow' => ['bg' => 'bg-yellow-50 dark:bg-yellow-900/20', 'border' => 'border-yellow-200 dark:border-yellow-800','badge' => 'bg-yellow-400 text-gray-900','level' => 'text-yellow-700','icon' => '🟡', 'msg' => 'text-gray-600 dark:text-gray-400'],
+                'green'  => ['bg' => 'bg-green-50 dark:bg-green-900/20',   'border' => 'border-green-200 dark:border-green-800',  'badge' => 'bg-green-500 text-white',  'level' => 'text-green-700',  'icon' => '🟢', 'msg' => 'text-gray-600 dark:text-gray-400'],
+                'gray'   => ['bg' => 'bg-gray-50 dark:bg-gray-800',        'border' => 'border-gray-200 dark:border-gray-700',    'badge' => 'bg-gray-400 text-white',   'level' => 'text-gray-600',   'icon' => '⚪', 'msg' => 'text-gray-600 dark:text-gray-400'],
             ];
             $c = $colorMap[$status['color']] ?? $colorMap['gray'];
 
             $trendIcon = match($trend) {
-                'Subiendo' => '↑',
-                'Bajando'  => '↓',
-                default    => '→',
+                'rising'  => '↑',
+                'falling' => '↓',
+                default   => '→',
             };
         @endphp
 
-        <div class="rounded-2xl border {{ $c['border'] }} {{ $c['bg'] }} p-6">
-            <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 dark:text-gray-500">{{ __('ui.tide_status_heading') }}</p>
+        <div x-data="{ openHourly: false }"
+             class="rounded-2xl border {{ $c['border'] }} {{ $c['bg'] }} overflow-hidden">
 
-            <div class="flex flex-col sm:flex-row sm:items-start gap-6">
+            {{-- Main content --}}
+            <div class="p-6">
+                <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 dark:text-gray-500">{{ __('ui.tide_status_heading') }}</p>
 
-                {{-- LEFT: level → badge → message --}}
-                <div class="flex-1 space-y-3">
+                <div class="flex flex-row items-start justify-between gap-6">
+
+                    {{-- LEFT: level only --}}
                     @if($current)
-                        {{-- Level --}}
+                    <div class="shrink-0">
                         <div class="flex items-baseline gap-2">
                             <span class="text-5xl font-black tabular-nums leading-none {{ $c['level'] }}">
                                 {{ $current['level'] }}
                             </span>
                             <span class="text-lg text-gray-400 dark:text-gray-500">m</span>
                         </div>
-                    @endif
-
-                    {{-- Status badge --}}
-                    @if($status['label'])
-                        <span class="inline-block px-3 py-1 rounded-full text-sm font-black tracking-wide {{ $c['badge'] }}">
-                            {{ $c['icon'] }} {{ $status['label'] }}
-                        </span>
-                    @endif
-
-                    {{-- Message --}}
-                    @if($status['message'])
-                        <div class="text-sm text-gray-700 leading-relaxed dark:text-gray-200">
-                            @foreach(explode("\n", $status['message']) as $line)
-                                <p>{{ $line }}</p>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-
-                {{-- RIGHT: trend + wind --}}
-                @if($current)
-                    <div class="shrink-0 sm:text-right">
-                        <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                            {{ $trendIcon }} {{ $trend }}
+                        <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-2">
+                            {{ $trendIcon }} {{ __('ui.tide_trend_'.$trend) }}
                         </p>
-                        <p class="text-xs text-gray-400 mb-3 dark:text-gray-500">{{ $current['hour'] }}</p>
-
-                        <!-- <div class="border-t border-black/5 pt-3">
-                            @if($wind['available'])
-                                <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 dark:text-gray-500">{{ __('ui.wind') }}</p>
-                                <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">💨 {{ $wind['direction'] }}</p>
-                                <p class="text-sm text-gray-500 tabular-nums dark:text-gray-400">{{ $wind['speed'] }} km/h</p>
-                            @else
-                                <p class="text-xs text-gray-400 italic dark:text-gray-500">{{ __('ui.wind_unavailable') }}</p>
-                            @endif
-                        </div> -->
+                        <p class="text-xs text-gray-400 dark:text-gray-500">{{ $current['hour'] }}</p>
                     </div>
-                @endif
+                    @endif
 
+                    {{-- RIGHT: badge + message stacked --}}
+                    <div class="shrink-0 space-y-2 text-right">
+                        @if($status['label'])
+                            <span class="inline-block px-3 py-1 rounded-full text-sm font-black tracking-wide {{ $c['badge'] }}">
+                                {{ $c['icon'] }} {{ __('ui.'.$status['label']) }}
+                            </span>
+                        @endif
+                        @if($status['message'])
+                            <div class="text-sm font-medium leading-snug mt-2 {{ $c['msg'] }}">
+                                @foreach(explode("\n", __('ui.'.$status['message'])) as $line)
+                                    <p>{{ $line }}</p>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
             </div>
+
+            {{-- Collapsible hourly heights --}}
+            @if(!empty($tide['hourly']))
+            <div class="border-t border-black/5 dark:border-white/5">
+                <button @click="openHourly = !openHourly"
+                        class="w-full flex items-center justify-between px-6 py-3 text-left
+                               text-xs font-semibold text-gray-500 dark:text-gray-400
+                               hover:bg-black/5 dark:hover:bg-white/5 transition-colors select-none">
+                    <span>{{ __('ui.hourly_heights') }}</span>
+                    <svg class="w-4 h-4 shrink-0 transition-transform duration-200"
+                         :class="openHourly ? 'rotate-180' : ''"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                         aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <div x-show="openHourly"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     style="display:none">
+                    <div class="overflow-x-auto border-t border-black/5 dark:border-white/5">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-black/5 dark:bg-white/5 text-left">
+                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">{{ __('ui.hour_col') }}</th>
+                                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">{{ __('ui.level_col') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-black/5 dark:divide-white/5">
+                                @php $currentHour = $tide['current']['hour'] ?? null; @endphp
+                                @foreach($tide['hourly'] as $row)
+                                    @php $isNow = ($row['hour'] === $currentHour); @endphp
+                                    <tr class="{{ $isNow ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-black/5 dark:hover:bg-white/5' }} transition-colors">
+                                        <td class="px-6 py-2.5 tabular-nums {{ $isNow ? 'font-bold text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300' }}">
+                                            @if($isNow)
+                                                <span class="inline-flex items-center gap-1.5">
+                                                    <span class="text-blue-500">👉</span>
+                                                    <span>{{ $row['hour'] }}</span>
+                                                </span>
+                                            @else
+                                                {{ $row['hour'] }}
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-2.5 font-semibold tabular-nums {{ $isNow ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200' }}">
+                                            {{ $row['level'] }}
+                                            @if($isNow)
+                                                <span class="ml-2 text-xs font-normal text-blue-400 dark:text-blue-500">{{ __('ui.last_reading') }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
+
         </div>
 
         {{-- ── 2. UPCOMING EVENTS — grouped by day ── --}}
@@ -245,10 +407,19 @@
 
             <div>
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-bold text-gray-800 text-lg dark:text-gray-100">{{ __('ui.forecast') }}</h2>
+                    <div>
+                        <h2 class="font-bold text-gray-800 text-lg dark:text-gray-100">{{ __('ui.forecast') }}</h2>
+                        @if($tide['updated_at'])
+                        <p class="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
+                            {{ __('ui.last_updated') }} <span class="font-semibold text-gray-500 dark:text-gray-400">{{ $tide['updated_at'] }}</span>
+                            <span class="text-gray-300 mx-1 dark:text-gray-600">·</span>
+                            <a href="{{ route('marea.index') }}" class="text-blue-500 hover:underline">{{ __('ui.update_link') }}</a>
+                        </p>
+                        @endif
+                    </div>
                     <a href="https://www.hidro.gov.ar/oceanografia/pronostico.asp"
                        target="_blank" rel="noopener"
-                       class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
+                       class="text-xs text-gray-400 hover:text-blue-500 transition-colors shrink-0">
                         hidro.gov.ar ↗
                     </a>
                 </div>
@@ -327,7 +498,7 @@
                                                 </p>
                                                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold
                                                     {{ $statusBadges[$col] ?? $statusBadges['gray'] }}">
-                                                    {{ $statusIcons[$col] ?? '' }} {{ $s['label'] }}
+                                                    {{ $statusIcons[$col] ?? '' }} {{ __('ui.'.$s['label']) }}
                                                 </span>
                                             </div>
                                         @endif
@@ -341,81 +512,54 @@
         @endif
 
         {{-- ── 3. HOURLY TABLE ── --}}
-        @if(!empty($tide['hourly']))
-            <div class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/20">
-                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between dark:border-gray-800">
-                    <h2 class="font-bold text-gray-800 dark:text-gray-100">{{ __('ui.hourly_heights') }}</h2>
-                    <a href="https://www.hidro.gov.ar/oceanografia/alturashorarias.asp"
-                       target="_blank" rel="noopener"
-                       class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
-                        hidro.gov.ar ↗
-                    </a>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 text-left dark:bg-gray-950">
-                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">{{ __('ui.hour_col') }}</th>
-                                <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">{{ __('ui.level_col') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
-                            @php
-                                // Use the same entry the service resolved as "current" — exact match, no recomputation.
-                                $currentHour = $tide['current']['hour'] ?? null;
-                            @endphp
-                            @foreach($tide['hourly'] as $row)
-                                @php $isNow = ($row['hour'] === $currentHour); @endphp
-                                <tr class="{{ $isNow ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800' }} transition-colors">
-                                    <td class="px-5 py-2.5 tabular-nums {{ $isNow ? 'font-bold text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300' }}">
-                                        @if($isNow)
-                                            <span title="{{ __('ui.last_reading_tooltip') }}" class="inline-flex items-center gap-1.5">
-                                                <span class="text-blue-500">👉</span>
-                                                <span>{{ $row['hour'] }}</span>
-                                            </span>
-                                        @else
-                                            {{ $row['hour'] }}
-                                        @endif
-                                    </td>
-                                    <td class="px-5 py-2.5 font-semibold tabular-nums {{ $isNow ? 'text-blue-700 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200' }}">
-                                        {{ $row['level'] }}
-                                        @if($isNow)
-                                            <span class="ml-2 text-xs font-normal text-blue-400 dark:text-blue-500">{{ __('ui.last_reading') }}</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @endif
 
         {{-- ── 4. TIDE CHART ── --}}
-        <div class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/20">
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between dark:border-gray-800">
-                <h2 class="font-bold text-gray-800 dark:text-gray-100">{{ __('ui.tide_chart_title') }}</h2>
-                <a href="{{ $tide['chart_source'] }}"
-                   target="_blank" rel="noopener"
-                   class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
-                    ina.gob.ar ↗
-                </a>
-            </div>
-            <div class="p-4">
-                <img src="{{ $tide['chart_image'] }}"
-                     alt="{{ __('ui.tide_chart_title') }}"
-                     class="w-full h-auto rounded-xl"
-                     loading="lazy"
-                     onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden')">
-                <p class="hidden text-sm text-gray-400 text-center py-6 dark:text-gray-500">
-                    {{ __('ui.chart_unavailable') }} <a href="{{ $tide['chart_source'] }}" target="_blank" class="text-blue-500 underline">{{ __('ui.view_at_ina') }}</a>
-                </p>
-                <p class="text-xs text-gray-400 text-center mt-3 dark:text-gray-500">
-                    {{ __('ui.chart_source_label') }} &mdash;
-                    <a href="{{ $tide['chart_source'] }}" target="_blank" rel="noopener" class="hover:underline">
-                        {{ __('ui.see_original') }}
+        <div x-data="{ openChart: false }"
+             class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/20">
+            <button @click="openChart = !openChart"
+                    class="w-full flex items-center justify-between px-6 py-4 text-left
+                           hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none">
+                <span class="font-bold text-gray-800 dark:text-gray-100">{{ __('ui.tide_chart_title') }}</span>
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="{{ $tide['chart_source'] }}"
+                       target="_blank" rel="noopener"
+                       @click.stop
+                       class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
+                        ina.gob.ar ↗
                     </a>
-                </p>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                         :class="openChart ? 'rotate-180' : ''"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                         aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+            </button>
+
+            <div x-show="openChart"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 style="display:none">
+                <div class="border-t border-gray-100 dark:border-gray-800 p-4">
+                    <img src="{{ $tide['chart_image'] }}"
+                         alt="{{ __('ui.tide_chart_title') }}"
+                         class="w-full h-auto rounded-xl"
+                         loading="lazy"
+                         onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden')">
+                    <p class="hidden text-sm text-gray-400 text-center py-6 dark:text-gray-500">
+                        {{ __('ui.chart_unavailable') }} <a href="{{ $tide['chart_source'] }}" target="_blank" class="text-blue-500 underline">{{ __('ui.view_at_ina') }}</a>
+                    </p>
+                    <p class="text-xs text-gray-400 text-center mt-3 dark:text-gray-500">
+                        {{ __('ui.chart_source_label') }} &mdash;
+                        <a href="{{ $tide['chart_source'] }}" target="_blank" rel="noopener" class="hover:underline">
+                            {{ __('ui.see_original') }}
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
 

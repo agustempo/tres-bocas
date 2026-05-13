@@ -134,6 +134,23 @@ return [
     'location_gps_timeout'    => 'Location request timed out. Place the pin manually.',
     'location_gps_error'      => 'Could not get your location. Place the pin manually.',
 
+    // ── Tide status labels & messages ────────────────────────────────────────
+    'tide_label_very_high' => 'VERY HIGH TIDE',
+    'tide_label_high'      => 'HIGH TIDE',
+    'tide_label_attention' => 'CAUTION',
+    'tide_label_normal'    => 'NORMAL',
+    'tide_label_low'       => 'LOW WATER',
+    'tide_label_very_low'  => 'VERY LOW WATER',
+    'tide_msg_very_high'   => "Water is on the ground.\nYou will likely get wet walking.",
+    'tide_msg_high'        => "Water level is high.\nWalking may be uncomfortable.",
+    'tide_msg_attention'   => "Water is rising.\nStay alert.",
+    'tide_msg_normal'      => 'Normal conditions for walking and boating.',
+    'tide_msg_low'         => 'Navigation may be limited.',
+    'tide_msg_very_low'    => "Navigation is difficult.\nRisk of running aground.",
+    'tide_trend_rising'    => 'Rising',
+    'tide_trend_falling'   => 'Falling',
+    'tide_trend_stable'    => 'Stable',
+
     // ── Marea page ───────────────────────────────────────────────────────────
     'marea_title'            => 'Tides',
     'tide_status_heading'    => 'Tide status',
@@ -163,6 +180,12 @@ return [
     'weather_summary'        => 'Weather',
     'weather_unavailable'    => 'Weather data temporarily unavailable.',
     'weather_next_6h'        => 'Next 6 hours',
+    'weather_feels_like'     => 'Feels like',
+    'weather_humidity'       => 'Humidity',
+    'weather_clouds'         => 'Clouds',
+    'weather_next_hours'     => 'Next hours',
+    'weather_strong_wind'    => 'Strong wind',
+    'weather_rain'           => 'Rain',
     'weather_source'         => 'Weather forecast — Open-Meteo',
 
     // ── Listings empty state ─────────────────────────────────────────────────
