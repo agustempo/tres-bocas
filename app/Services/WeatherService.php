@@ -22,8 +22,10 @@ use Illuminate\Support\Facades\Log;
  */
 class WeatherService
 {
-    const CACHE_KEY = 'weather_san_fernando';
-    const CACHE_TTL = 60; // minutes
+    const CACHE_KEY       = 'weather_san_fernando';
+    const CACHE_TTL       = 30;  // minutes — fresh data
+    const CACHE_STALE_KEY = 'weather_san_fernando_stale';
+    const CACHE_STALE_TTL = 360; // minutes — fallback si la API falla
 
     const API_URL   = 'https://api.open-meteo.com/v1/forecast';
     const LATITUDE  = -34.44;
@@ -59,13 +61,39 @@ class WeatherService
 
     public function getData(): array
     {
-        return Cache::remember(self::CACHE_KEY, now()->addMinutes(self::CACHE_TTL), fn () => $this->fetch());
+        // Devolver caché fresco si existe
+        $cached = Cache::get(self::CACHE_KEY);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        return $this->fetchAndCache();
     }
 
     public function refresh(): array
     {
+        return $this->fetchAndCache();
+    }
+
+    private function fetchAndCache(): array
+    {
         $data = $this->fetch();
-        Cache::put(self::CACHE_KEY, $data, now()->addMinutes(self::CACHE_TTL));
+
+        if ($data['available']) {
+            // Guardar caché fresco y actualizar el stale de respaldo
+            Cache::put(self::CACHE_KEY,       $data, now()->addMinutes(self::CACHE_TTL));
+            Cache::put(self::CACHE_STALE_KEY, $data, now()->addMinutes(self::CACHE_STALE_TTL));
+            return $data;
+        }
+
+        // Si el fetch falló, devolver stale antes de mostrar error
+        $stale = Cache::get(self::CACHE_STALE_KEY);
+        if ($stale !== null) {
+            Log::info('WeatherService: usando datos en caché stale');
+            return $stale;
+        }
+
+        // Sin caché de ningún tipo: devolver error sin cachear
         return $data;
     }
 
@@ -74,7 +102,7 @@ class WeatherService
     private function fetch(): array
     {
         try {
-            $response = Http::timeout(10)->get(self::API_URL, [
+            $response = Http::timeout(15)->retry(2, 500)->get(self::API_URL, [
                 'latitude'        => self::LATITUDE,
                 'longitude'       => self::LONGITUDE,
                 'current'         => 'temperature_2m,apparent_temperature,relative_humidity_2m,cloud_cover,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',

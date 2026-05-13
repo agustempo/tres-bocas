@@ -409,11 +409,11 @@ class TideService
     private function classifyLevel(float $level): array
     {
         return match (true) {
-            $level >= 2.20 => ['label' => 'tide_label_very_high', 'color' => 'red',    'message' => 'tide_msg_very_high'],
-            $level >= 2.00 => ['label' => 'tide_label_high',      'color' => 'orange', 'message' => 'tide_msg_high'],
-            $level >= 1.70 => ['label' => 'tide_label_attention', 'color' => 'yellow', 'message' => 'tide_msg_attention'],
+            $level >= 2.40 => ['label' => 'tide_label_very_high', 'color' => 'red',    'message' => null],
+            $level >= 2.20 => ['label' => 'tide_label_high',      'color' => 'orange', 'message' => 'tide_msg_high'],
+            $level >= 1.90 => ['label' => 'tide_label_attention', 'color' => 'yellow', 'message' => 'tide_msg_attention'],
             $level >= 0.70 => ['label' => 'tide_label_normal',    'color' => 'green',  'message' => 'tide_msg_normal'],
-            $level >= 0.40 => ['label' => 'tide_label_low',       'color' => 'yellow', 'message' => 'tide_msg_low'],
+            $level >= 0.35 => ['label' => 'tide_label_low',       'color' => 'yellow', 'message' => 'tide_msg_low'],
             default        => ['label' => 'tide_label_very_low',  'color' => 'red',    'message' => 'tide_msg_very_low'],
         };
     }
