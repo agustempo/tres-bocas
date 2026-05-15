@@ -6,15 +6,34 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\MareaController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\Movilidad\AlertasServicioController;
+use App\Http\Controllers\Movilidad\AvistajesController;
+use App\Http\Controllers\Movilidad\MuellesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\Movilidad\MuellesController as AdminMuellesController;
+use App\Http\Controllers\Admin\Movilidad\PatronesController as AdminPatronesController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
 // Useful local information
 Route::get('/marea', [MareaController::class, 'index'])->name('marea.index');
+
+// Movilidad — public read
+Route::prefix('movilidad')->name('movilidad.')->group(function () {
+    Route::get('/', [MuellesController::class, 'index'])->name('index');
+    Route::get('/muelles/{slug}', [MuellesController::class, 'show'])->name('muelles.show');
+});
+
+// Movilidad — auth required (reportar)
+Route::prefix('movilidad')->name('movilidad.')->middleware('auth')->group(function () {
+    Route::post('/avistajes', [AvistajesController::class, 'store'])->name('avistajes.store');
+    Route::post('/avistajes/{id}/confirmar', [AvistajesController::class, 'confirmar'])->name('avistajes.confirmar');
+    Route::post('/alertas', [AlertasServicioController::class, 'store'])->name('alertas.store');
+    Route::delete('/alertas/{alerta}', [AlertasServicioController::class, 'destroy'])->name('alertas.destroy');
+});
 
 // Language switcher
 Route::get('/lang/{locale}', function (string $locale) {
@@ -72,5 +91,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/reservations/{reservation}/complete', [ReservationController::class, 'complete'])->name('reservations.complete');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
 });
+
+// ── Admin — Movilidad ────────────────────────────────────────
+Route::prefix('admin/movilidad')->name('admin.movilidad.')
+    ->middleware(['auth', 'admin'])
+    ->group(function () {
+        Route::get('/',                              [AdminMuellesController::class, 'index'])->name('index');
+        Route::get('/muelles/{muelle}',              [AdminMuellesController::class, 'editor'])->name('muelles.editor');
+        Route::get('/muelles/{muelle}/preview',      [AdminMuellesController::class, 'preview'])->name('muelles.preview');
+        Route::post('/patrones',                     [AdminPatronesController::class, 'store'])->name('patrones.store');
+        Route::patch('/patrones/{patron}',           [AdminPatronesController::class, 'update'])->name('patrones.update');
+        Route::delete('/patrones/{patron}',          [AdminPatronesController::class, 'destroy'])->name('patrones.destroy');
+        Route::post('/patrones/{patron}/validar',    [AdminPatronesController::class, 'validar'])->name('patrones.validar');
+        Route::post('/patrones/validar-bulk',        [AdminPatronesController::class, 'validarBulk'])->name('patrones.validar-bulk');
+        Route::get('/patrones/{patron}/avistajes',   [AdminPatronesController::class, 'avistajes'])->name('patrones.avistajes');
+        Route::post('/patrones/import',              [AdminPatronesController::class, 'import'])->name('patrones.import');
+    });
 
 require __DIR__.'/auth.php';

@@ -21,6 +21,26 @@
                     <span class="text-base leading-none">🌊</span>
                     Marea
                 </a>
+                <a href="{{ route('movilidad.index') }}"
+                   class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                          {{ request()->routeIs('movilidad.*') && !request()->routeIs('admin.*')
+                              ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400'
+                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100' }}">
+                    <span class="text-base leading-none">🛥</span>
+                    {{ __('movilidad.muelles') }}
+                </a>
+                @auth
+                    @if (auth()->user()->isAdmin())
+                        <a href="{{ route('admin.movilidad.index') }}"
+                           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                                  {{ request()->routeIs('admin.*')
+                                      ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
+                                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100' }}">
+                            <span class="text-base leading-none">⚙️</span>
+                            Admin
+                        </a>
+                    @endif
+                @endauth
             </nav>
 
             {{-- Search --}}
@@ -198,6 +218,14 @@
                              x-transition:enter-end="opacity-100 scale-100"
                              class="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-2xl shadow-lg
                                     border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+                            @if (auth()->user()->isAdmin())
+                                <a href="{{ route('admin.movilidad.index') }}"
+                                   class="block px-4 py-2.5 text-sm font-medium text-violet-700 dark:text-violet-400
+                                          hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
+                                    ⚙️ Admin · Movilidad
+                                </a>
+                                <div class="border-t border-gray-100 dark:border-gray-700"></div>
+                            @endif
                             <a href="{{ route('dashboard') }}"
                                class="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300
                                       hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -335,6 +363,15 @@
         </div>
 
         @auth
+            @if (auth()->user()->isAdmin())
+                <a href="{{ route('admin.movilidad.index') }}"
+                   class="block px-3 py-2 rounded-xl text-sm font-medium
+                          {{ request()->routeIs('admin.*')
+                              ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                    ⚙️ Admin · Movilidad
+                </a>
+            @endif
             <a href="{{ route('dashboard') }}"
                class="block px-3 py-2 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                 {{ __('ui.dashboard') }}
