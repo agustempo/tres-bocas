@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\UserPreferencesController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\ListingController;
@@ -14,12 +16,29 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Admin\Movilidad\MuellesController as AdminMuellesController;
 use App\Http\Controllers\Admin\Movilidad\PatronesController as AdminPatronesController;
+use App\Http\Controllers\Admin\ServicioSuspensionController;
+use App\Http\Controllers\HorariosController;
+use App\Http\Controllers\MuellesComunidadController;
+use App\Http\Controllers\PatronesComunidadController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', HomeController::class)->name('home');
+// Root → dashboard (requires auth; guests redirected to login)
+Route::get('/', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('home');
+
+// /dashboard backward-compat redirect
+Route::redirect('/dashboard', '/')->name('dashboard');
+
+// Services / listings discovery page (was /)
+Route::get('/servicios', HomeController::class)->name('servicios.index');
+
+// Live search endpoint — public
+Route::get('/search', [SearchController::class, 'index'])->name('search.index');
 
 // Useful local information
 Route::get('/marea', [MareaController::class, 'index'])->name('marea.index');
+Route::redirect('/condiciones', '/marea')->name('condiciones');
 
 // Movilidad — public read
 Route::prefix('movilidad')->name('movilidad.')->group(function () {
@@ -35,6 +54,19 @@ Route::prefix('movilidad')->name('movilidad.')->middleware('auth')->group(functi
     Route::delete('/alertas/{alerta}', [AlertasServicioController::class, 'destroy'])->name('alertas.destroy');
 });
 
+// Horarios — public per-muelle view
+Route::get('/horarios/{muelle:slug}', [HorariosController::class, 'byMuelle'])->name('horarios.muelle');
+
+// Horarios — personal schedule screen (auth required)
+Route::middleware('auth')->group(function () {
+    Route::get('/horarios', [HorariosController::class, 'index'])->name('horarios.index');
+    Route::post('/horarios/salidas/{patron}/confirmar', [HorariosController::class, 'confirmarSalida'])->name('horarios.salidas.confirmar');
+    Route::post('/horarios/comunidad', [PatronesComunidadController::class, 'store'])->name('horarios.comunidad.store');
+    Route::post('/muelles/comunidad', [MuellesComunidadController::class, 'store'])->name('muelles.comunidad.store');
+});
+Route::post('/horarios/salidas/{patron}/reaccionar', [HorariosController::class, 'reaccionar'])->name('horarios.salidas.reaccionar');
+Route::post('/horarios/comunidad/{patron}/reaccionar', [PatronesComunidadController::class, 'reaccionar'])->name('horarios.comunidad.reaccionar');
+
 // Language switcher
 Route::get('/lang/{locale}', function (string $locale) {
     $supported = ['en', 'es', 'pt', 'fr'];
@@ -44,16 +76,16 @@ Route::get('/lang/{locale}', function (string $locale) {
     return redirect()->back()->withInput();
 })->name('lang.switch');
 
-// Dashboard — requires auth
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// (dashboard moved to / above)
 
 // Profile
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // User preferences
+    Route::patch('/user/muelle', [UserPreferencesController::class, 'updateMuelle'])->name('user.muelle.update');
 });
 
 // Listings — public read
@@ -106,6 +138,7 @@ Route::prefix('admin/movilidad')->name('admin.movilidad.')
         Route::post('/patrones/validar-bulk',        [AdminPatronesController::class, 'validarBulk'])->name('patrones.validar-bulk');
         Route::get('/patrones/{patron}/avistajes',   [AdminPatronesController::class, 'avistajes'])->name('patrones.avistajes');
         Route::post('/patrones/import',              [AdminPatronesController::class, 'import'])->name('patrones.import');
+        Route::patch('/servicios/{servicio}/suspension', [ServicioSuspensionController::class, 'update'])->name('servicios.suspension');
     });
 
 require __DIR__.'/auth.php';

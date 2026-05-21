@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ConfirmacionAvistaje extends Model
 {
+    protected $table = 'confirmaciones_avistaje';
+
     public $timestamps = false;
 
     protected $fillable = [

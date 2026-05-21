@@ -318,6 +318,107 @@
                    class="mt-1.5 text-xs text-red-600 dark:text-red-400"></p>
             </div>
 
+            {{-- Muelle habitual --}}
+            <div x-data="{
+                    busca: '',
+                    open: false,
+                    elegido: null,
+                    creandoNuevo: false,
+                    get filtrados() {
+                        const lista = (window.deltaMuelles || []);
+                        if (!this.busca) return lista.slice(0, 8);
+                        const q = this.busca.toLowerCase();
+                        return lista.filter(m => m.nombre.toLowerCase().includes(q)).slice(0, 8);
+                    }
+                }">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    ¿Cuál es tu muelle habitual?
+                    <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(opcional)</span>
+                </label>
+
+                {{-- Search input --}}
+                <div x-show="!elegido && !creandoNuevo" class="relative">
+                    <input type="text"
+                           x-model="busca"
+                           @focus="open = true"
+                           @input="open = true"
+                           @keydown.escape="open = false"
+                           placeholder="Buscá tu muelle…"
+                           autocomplete="off"
+                           class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700
+                                  bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                                  placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent
+                                  transition-colors duration-150">
+
+                    {{-- Dropdown --}}
+                    <div x-show="open"
+                         x-cloak
+                         @click.away="open = false"
+                         class="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800
+                                border border-gray-100 dark:border-gray-700
+                                rounded-xl shadow-lg max-h-44 overflow-y-auto z-[100]">
+                        <template x-for="m in filtrados" :key="m.id">
+                            <button type="button"
+                                    @click="elegido = m; busca = m.nombre; open = false;
+                                            $store.auth.regMuelleId = m.id; $store.auth.regMuelleNuevo = ''"
+                                    class="w-full text-left px-4 py-2.5 text-sm
+                                           text-gray-800 dark:text-gray-200
+                                           hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                                <span x-text="m.nombre"></span>
+                                <span x-show="m.zona"
+                                      x-text="'· ' + m.zona"
+                                      class="text-xs text-gray-400 dark:text-gray-500 ml-1"></span>
+                            </button>
+                        </template>
+                        <button type="button"
+                                @click="creandoNuevo = true; open = false; busca = '';
+                                        $store.auth.regMuelleId = 'nuevo'"
+                                class="w-full text-left px-4 py-2.5 text-sm font-medium
+                                       text-teal-600 dark:text-teal-400
+                                       hover:bg-teal-50 dark:hover:bg-teal-900/20
+                                       border-t border-gray-100 dark:border-gray-700 transition-colors">
+                            + Agregar otro muelle
+                        </button>
+                    </div>
+                </div>
+
+                {{-- New muelle name --}}
+                <div x-show="creandoNuevo" class="space-y-1.5">
+                    <input type="text"
+                           x-model="$store.auth.regMuelleNuevo"
+                           placeholder="Nombre del muelle"
+                           autocomplete="off"
+                           class="w-full px-4 py-2.5 text-sm rounded-xl border border-teal-300 dark:border-teal-700
+                                  bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                                  placeholder-gray-400 dark:placeholder-gray-500
+                                  focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent
+                                  transition-colors duration-150">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Se agregará pendiente de verificación.</p>
+                        <button type="button"
+                                @click="creandoNuevo = false; $store.auth.regMuelleId = null; $store.auth.regMuelleNuevo = ''"
+                                class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Selected chip --}}
+                <div x-show="elegido" class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1
+                                 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300
+                                 text-xs font-medium rounded-full border border-teal-200 dark:border-teal-800">
+                        🛥 <span x-text="elegido?.nombre"></span>
+                    </span>
+                    <button type="button"
+                            @click="elegido = null; busca = ''; $store.auth.regMuelleId = null"
+                            class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        Cambiar
+                    </button>
+                </div>
+            </div>
+
             {{-- Submit --}}
             <button @click="$store.auth.submitRegister()"
                     :disabled="$store.auth.loading"

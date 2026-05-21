@@ -18,11 +18,13 @@ return [
     'tipo_especial'         => 'Service spécial',
 
     // Observations — types
-    'avistaje_paso'      => 'Arrêté ici',
-    'avistaje_embarco'   => 'Embarqué',
-    'avistaje_no_paro'   => 'Passé sans s\'arrêter',
-    'avistaje_cancelado' => 'Non venu / Annulé',
-    'avistaje_demorado'  => 'En retard',
+    'avistaje_paso'             => 'Arrêté ici',
+    'avistaje_embarco'          => 'Embarqué',
+    'avistaje_no_paro'          => 'Passé sans s\'arrêter',
+    'avistaje_cancelado'        => 'Non venu / Annulé',
+    'avistaje_demorado'         => 'En retard',
+    'avistaje_problema_muelle'  => 'Problème à l\'embarcadère',
+    'avistaje_otro'             => 'Autre situation',
 
     // Observations — UI
     'avistaje_reportar'        => 'Vous l\'avez vu ?',
@@ -108,6 +110,54 @@ return [
     // Signalement
     'reportar_sobre'      => 'Signaler sur :servicio à :muelle',
     'login_para_reportar' => 'Connectez-vous pour signaler des observations',
+
+    // Horaires personnels
+    'horarios_titulo'        => "Horaires d'aujourd'hui",
+    'salidas_hoy'            => "Départs d'aujourd'hui",
+    'salidas_hacia_tigre'    => 'Vers Tigre',
+    'salidas_desde_tigre'    => 'Depuis Tigre',
+    'llega_muelle_aprox'     => 'arrive ~:hora',
+    'sale_tigre_hora'        => 'départ Tigre :hora',
+    'sin_horarios_vuelta'    => "Aucun horaire de retour enregistré pour aujourd'hui.",
+    'manana_label'           => 'Demain',
+    'ya_salio'               => 'déjà parti',
+    'salida_en_min'          => 'dans :min min',
+    'salida_en_horas'        => 'dans :h h :m min',
+    'confirmaron_n'          => '{1} 1 confirmé|[2,*] :count confirmés',
+    'confirmaron_demora'     => '{1} 1 a confirmé le retard|[2,*] :count ont confirmé le retard',
+    'sin_confirmaciones'     => 'Pas encore de confirmation',
+    'reportar_algo'          => 'signaler quelque chose',
+    'ya_lo_vi'               => 'compris',
+    'aviso_activo_label'     => 'Alerte active',
+    'tolerancia_label'       => '± :min min',
+    'proxima_label'          => 'prochain',
+    'sin_muelle_elegido'     => 'Choisissez votre embarcadère pour voir vos horaires',
+    'confirmar_salida'       => 'Confirmer',
+    'que_esta_pasando'       => 'Que se passe-t-il ?',
+
+    // Visibilité et regroupement des départs
+    'schedule_past_toggle_show' => ':count précédents',
+    'schedule_past_toggle_hide' => 'masquer les précédents',
+    'schedule_recent_hint'      => 'Est-il passé ?',
+    'schedule_recent_ago'       => 'il y a :time',
+
+    // Panneau de signalement
+    'sighting_panel_title'             => 'Que se passe-t-il ?',
+    'sighting_panel_subtitle'          => "Votre signalement aide tous ceux qui partent de cet embarcadère.",
+    'sighting_note_toggle_open'        => '+ Ajouter un détail',
+    'sighting_note_toggle_close'       => '− Retirer le détail',
+    'sighting_note_placeholder'        => 'Précisez si vous le souhaitez...',
+    'sighting_submit_success_title'    => "Merci pour l'info",
+    'sighting_submit_success_subtitle' => 'Votre signalement :type est maintenant visible par tous.',
+    'sighting_btn_send'                => 'Envoyer le signalement',
+    'sighting_btn_cancel'              => 'Annuler',
+
+    // Réactions sur les cartes de départ
+    'departure_reaction_negative_title'    => 'Quelque chose ne va pas ?',
+    'departure_reaction_negative_subtitle' => 'Connectez-vous pour signaler un retard ou un problème.',
+    'departure_reaction_login_cta'         => 'Signaler',
+    'departure_reaction_dismiss_cta'       => 'Tout va bien',
+    'departure_sighting_strip'             => ':type · :name · :time',
 
     // Descargo
     'disclaimer_horarios' => 'Les horaires sont des références communautaires et peuvent ne pas correspondre au service réel. Pour des informations officielles, contactez directement Interisleña.',

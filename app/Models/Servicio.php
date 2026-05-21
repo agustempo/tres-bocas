@@ -17,11 +17,14 @@ class Servicio extends Model
         'contacto',
         'activo',
         'verificado',
+        'suspendido',
+        'suspension_motivo',
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
+        'activo'     => 'boolean',
         'verificado' => 'boolean',
+        'suspendido' => 'boolean',
     ];
 
     public function muelles(): BelongsToMany

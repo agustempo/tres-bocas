@@ -13,19 +13,27 @@
         </div>
 
         {{-- ── HEADER DEL MUELLE ── --}}
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                🛥 {{ $muelle->nombre }}
-            </h1>
-            @if ($muelle->rio || $muelle->zona)
-                <p class="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
-                    {{ implode(' · ', array_filter([$muelle->rio, $muelle->zona])) }}
-                </p>
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {{ $muelle->nombre }}
+                </h1>
+                @if ($muelle->rio || $muelle->zona)
+                    <p class="mt-0.5 text-sm text-gray-400 dark:text-gray-500">
+                        {{ implode(' · ', array_filter([$muelle->rio, $muelle->zona])) }}
+                    </p>
+                @endif
+            </div>
+            @if (auth()->check() && auth()->user()->isAdmin())
+                <a href="{{ route('admin.movilidad.muelles.editor', $muelle) }}"
+                   class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
+                          bg-gray-100 text-gray-600 hover:bg-teal-50 hover:text-teal-700
+                          dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-teal-900/20 dark:hover:text-teal-300
+                          border border-gray-200 dark:border-gray-700 transition-colors">
+                    ✏ {{ __('ui.edit') }}
+                </a>
             @endif
         </div>
-
-        {{-- ── CONDICIONES AMBIENTALES ── --}}
-        @include('movilidad.partials._condiciones-banner', ['condiciones' => $condicionesActuales])
 
         {{-- ── SERVICIOS ── --}}
         @if (count($resumen) > 0)
@@ -40,19 +48,10 @@
 
                     <div x-data="{
                              open: false, tipo: '', sentido: '', horaRef: '',
-                             diaTab: '{{ $item['tipo_dia_hoy'] }}', patronId: '',
-                             votosOk: 0, votosMal: 0, hace: '0', mostrarCuando: false,
-                             abrirPill(s, h, pid, ok, mal, hh, mm) {
-                                 this.sentido = s; this.horaRef = h; this.patronId = String(pid);
-                                 this.votosOk = ok; this.votosMal = mal; this.hace = '0';
-                                 let p = new Date(); p.setHours(hh, mm, 0, 0);
-                                 this.mostrarCuando = Math.abs(new Date() - p) / 60000 <= 60;
-                                 this.open = true;
-                             },
+                             patronId: '', votosOk: 0, votosMal: 0, hace: '0',
                              cerrar() {
                                  this.open = false; this.tipo = ''; this.horaRef = ''; this.sentido = '';
-                                 this.patronId = ''; this.votosOk = 0; this.votosMal = 0;
-                                 this.hace = '0'; this.mostrarCuando = false;
+                                 this.patronId = ''; this.votosOk = 0; this.votosMal = 0; this.hace = '0';
                              }
                          }"
                          @click.outside="cerrar()"
@@ -179,181 +178,16 @@
                                 </div>
                             @endif
 
-                            {{-- Grilla de horarios por día --}}
-                            @php
-                                $ahora        = now();
-                                $corte        = $ahora->copy()->subMinutes(5);
-                                $esTigre      = $item['es_tigre'];
-                                $tipoDiaHoy   = $item['tipo_dia_hoy'];
-                                $porTipo      = $item['patrones_por_tipo'];
-                                $tigrePorTipo = $item['tigre_por_tipo'];
-
-                                $tiposConDatos = array_filter([
-                                    'lv'      => ($porTipo['lv'] ?? collect())->isNotEmpty(),
-                                    'sabado'  => ($porTipo['sabado'] ?? collect())->isNotEmpty(),
-                                    'domingo' => ($porTipo['domingo'] ?? collect())->isNotEmpty(),
-                                ]);
-                                $anySchedule     = count($tiposConDatos) > 0;
-                                $hasMultipleTabs = count($tiposConDatos) > 1;
-
-                                // Próximo para hoy
-                                $idaLocalHoy = ($porTipo[$tipoDiaHoy] ?? collect())->where('sentido', 'ida')->sortBy('hora_referencia')->values();
-                                $tigreHoy    = ($tigrePorTipo[$tipoDiaHoy] ?? collect())->values();
-                                if ($esTigre) { $tigreHoy = $idaLocalHoy; }
-                                $vueltaHoy   = ($porTipo[$tipoDiaHoy] ?? collect())->where('sentido', 'vuelta')->sortBy('hora_referencia')->values();
-
-                                $proxVuelta   = $vueltaHoy->first(fn($p) => \Carbon\Carbon::today()->setTimeFromTimeString($p->hora_referencia)->gt($corte));
-                                $proxIdaLocal = $idaLocalHoy->first(fn($p) => \Carbon\Carbon::today()->setTimeFromTimeString($p->hora_referencia)->gt($corte));
-                                $proxIdaIdx   = $proxIdaLocal ? $idaLocalHoy->search(fn($p) => $p->id === $proxIdaLocal->id) : null;
-                                $proxTigreId  = ($proxIdaIdx !== null && $proxIdaIdx !== false && $tigreHoy->has($proxIdaIdx))
-                                                ? $tigreHoy->get($proxIdaIdx)->id : null;
-                                if ($esTigre) { $proxTigreId = $proxIdaLocal?->id; }
-                            @endphp
-
-                            @if ($anySchedule)
-                                <div class="mt-3">
-
-                                    {{-- Tabs de día (solo si hay más de un tipo con datos) --}}
-                                    @if ($hasMultipleTabs)
-                                        <div class="flex gap-1.5 mb-3">
-                                            @foreach (['lv' => 'L–V', 'sabado' => 'Sáb', 'domingo' => 'Dom'] as $dType => $dLabel)
-                                                @if (!empty($tiposConDatos[$dType]))
-                                                    <button type="button"
-                                                            @click="diaTab = '{{ $dType }}'"
-                                                            :class="diaTab === '{{ $dType }}'
-                                                                ? 'bg-teal-500 text-white'
-                                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
-                                                            class="px-3 py-1 rounded-full text-xs font-semibold transition-colors">
-                                                        {{ $dLabel }}
-                                                    </button>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                    @endif
-
-                                    {{-- Grid por tipo de día --}}
-                                    @foreach (['lv' => 'L–V', 'sabado' => 'Sáb', 'domingo' => 'Dom'] as $dType => $dLabel)
-                                        @if (!empty($tiposConDatos[$dType]))
-                                            @php
-                                                $vD      = ($porTipo[$dType] ?? collect())->where('sentido', 'vuelta')->sortBy('hora_referencia')->values();
-                                                $iD      = ($porTipo[$dType] ?? collect())->where('sentido', 'ida')->sortBy('hora_referencia')->values();
-                                                $tD      = ($tigrePorTipo[$dType] ?? collect())->values();
-                                                if ($esTigre) { $tD = $iD; }
-                                                $isToday = ($tipoDiaHoy === $dType);
-                                            @endphp
-                                            <div x-show="diaTab === '{{ $dType }}'" class="space-y-3">
-
-                                                {{-- ← A TIGRE (vuelta) --}}
-                                                @if ($vD->isNotEmpty() && !$esTigre)
-                                                    <div>
-                                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">
-                                                            {{ __('movilidad.sentido_a_tigre') }}
-                                                        </p>
-                                                        <div class="flex flex-wrap gap-1.5">
-                                                            @foreach ($vD as $patron)
-                                                                @php
-                                                                    $hp        = \Carbon\Carbon::today()->setTimeFromTimeString($patron->hora_referencia);
-                                                                    $esPasado  = $isToday && $hp->lt($corte);
-                                                                    $esProximo = $isToday && ($proxVuelta?->id === $patron->id);
-                                                                    $votosOk   = $patron->votos_ok ?? 0;
-                                                                    $votosMal  = $patron->votos_mal ?? 0;
-                                                                @endphp
-                                                                @if ($esProximo)
-                                                                    <button type="button"
-                                                                            @click="abrirPill('vuelta', '{{ $hp->format('H:i') }}', {{ $patron->id }}, {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold
-                                                                                   bg-teal-500 dark:bg-teal-600 text-white hover:bg-teal-600 transition-colors">
-                                                                        <x-movilidad.confidence-badge :fuente="$patron->fuente" :votosOk="$votosOk" :votosMal="$votosMal" size="xs" />
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="opacity-75 text-[9px] tabular-nums">✓{{ $votosOk }}</span>@endif
-                                                                        <span class="text-base leading-none">🙋</span>
-                                                                    </button>
-                                                                @elseif ($esPasado)
-                                                                    <button type="button"
-                                                                            @click="abrirPill('vuelta', '{{ $hp->format('H:i') }}', {{ $patron->id }}, {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-mono
-                                                                                   text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors">
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="text-[9px] tabular-nums text-green-400/60">✓{{ $votosOk }}</span>@endif
-                                                                    </button>
-                                                                @else
-                                                                    <button type="button"
-                                                                            @click="abrirPill('vuelta', '{{ $hp->format('H:i') }}', {{ $patron->id }}, {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium
-                                                                                   bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300
-                                                                                   hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                                                                        <x-movilidad.confidence-badge :fuente="$patron->fuente" :votosOk="$votosOk" :votosMal="$votosMal" size="xs" />
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="text-[9px] tabular-nums text-green-500">✓{{ $votosOk }}</span>@endif
-                                                                        @if ($votosMal > 0 && $votosOk === 0)<span class="text-[9px] tabular-nums text-red-400">✗{{ $votosMal }}</span>@endif
-                                                                    </button>
-                                                                @endif
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                {{-- → DESDE TIGRE (salida desde Tigre) --}}
-                                                @if ($tD->isNotEmpty())
-                                                    <div>
-                                                        <p class="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5">
-                                                            {{ $esTigre ? __('movilidad.salidas_desde_aca') : __('movilidad.desde_tigre') }}
-                                                        </p>
-                                                        <div class="flex flex-wrap gap-1.5">
-                                                            @foreach ($tD as $tigreIdx => $patron)
-                                                                @php
-                                                                    $hp            = \Carbon\Carbon::today()->setTimeFromTimeString($patron->hora_referencia);
-                                                                    $localP        = $iD->get($tigreIdx);
-                                                                    $esPasado      = $isToday && ($localP
-                                                                        ? \Carbon\Carbon::today()->setTimeFromTimeString($localP->hora_referencia)->lt($corte)
-                                                                        : $hp->lt($corte));
-                                                                    $esProximo     = $isToday && ($patron->id === $proxTigreId);
-                                                                    $localPatronId = $localP?->id ?? '';
-                                                                    $votosOk       = $localP?->votos_ok ?? 0;
-                                                                    $votosMal      = $localP?->votos_mal ?? 0;
-                                                                @endphp
-                                                                @php $localFuente = $localP?->fuente ?? 'estimado'; @endphp
-                                                                @if ($esProximo)
-                                                                    <button type="button"
-                                                                            @click="abrirPill('ida', '{{ $hp->format('H:i') }}', '{{ $localPatronId }}', {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold
-                                                                                   bg-teal-500 dark:bg-teal-600 text-white hover:bg-teal-600 transition-colors">
-                                                                        <x-movilidad.confidence-badge :fuente="$localFuente" :votosOk="$votosOk" :votosMal="$votosMal" size="xs" />
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="opacity-75 text-[9px] tabular-nums">✓{{ $votosOk }}</span>@endif
-                                                                        <span class="text-base leading-none">🙋</span>
-                                                                    </button>
-                                                                @elseif ($esPasado)
-                                                                    <button type="button"
-                                                                            @click="abrirPill('ida', '{{ $hp->format('H:i') }}', '{{ $localPatronId }}', {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-mono
-                                                                                   text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors">
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="text-[9px] tabular-nums text-green-400/60">✓{{ $votosOk }}</span>@endif
-                                                                    </button>
-                                                                @else
-                                                                    <button type="button"
-                                                                            @click="abrirPill('ida', '{{ $hp->format('H:i') }}', '{{ $localPatronId }}', {{ $votosOk }}, {{ $votosMal }}, {{ $hp->hour }}, {{ $hp->minute }})"
-                                                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono font-medium
-                                                                                   bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300
-                                                                                   hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                                                                        <x-movilidad.confidence-badge :fuente="$localFuente" :votosOk="$votosOk" :votosMal="$votosMal" size="xs" />
-                                                                        {{ $hp->format('H:i') }}
-                                                                        @if ($votosOk > 0)<span class="text-[9px] tabular-nums text-green-500">✓{{ $votosOk }}</span>@endif
-                                                                        @if ($votosMal > 0 && $votosOk === 0)<span class="text-[9px] tabular-nums text-red-400">✗{{ $votosMal }}</span>@endif
-                                                                    </button>
-                                                                @endif
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                            </div>
-                                        @endif
-                                    @endforeach
-
-                                </div>
-                            @endif
+                            {{-- Trigger: reportar avistaje --}}
+                            @auth
+                            <div class="mt-3">
+                                <button @click="open = true"
+                                        class="text-xs font-medium text-teal-600 dark:text-teal-400
+                                               hover:underline transition-colors">
+                                    {{ __('movilidad.avistaje_reportar') }} →
+                                </button>
+                            </div>
+                            @endauth
                         </div>
 
                         {{-- Botones de reporte --}}
@@ -442,8 +276,8 @@
                                                 </select>
                                             </div>
 
-                                            {{-- ¿Cuándo? (solo si el horario está dentro de ±1 hora del momento actual) --}}
-                                            <div class="mt-3" x-show="mostrarCuando">
+                                            {{-- ¿Cuándo? --}}
+                                            <div class="mt-3">
                                                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                                                     {{ __('movilidad.avistaje_cuando') }}
                                                 </label>

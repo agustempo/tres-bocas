@@ -18,11 +18,13 @@ return [
     'tipo_especial'         => 'Special service',
 
     // Sightings — types
-    'avistaje_paso'      => 'Stopped here',
-    'avistaje_embarco'   => 'Boarded',
-    'avistaje_no_paro'   => 'Passed without stopping',
-    'avistaje_cancelado' => 'Did not come / Cancelled',
-    'avistaje_demorado'  => 'Running late',
+    'avistaje_paso'             => 'Stopped here',
+    'avistaje_embarco'          => 'Boarded',
+    'avistaje_no_paro'          => 'Passed without stopping',
+    'avistaje_cancelado'        => 'Did not come / Cancelled',
+    'avistaje_demorado'         => 'Running late',
+    'avistaje_problema_muelle'  => 'Dock issue',
+    'avistaje_otro'             => 'Other',
 
     // Sightings — UI
     'avistaje_reportar'        => 'Did you see it?',
@@ -108,6 +110,54 @@ return [
     // Report context
     'reportar_sobre'      => 'Report on :servicio at :muelle',
     'login_para_reportar' => 'Log in to report sightings',
+
+    // Personal schedules
+    'horarios_titulo'        => "Today's schedule",
+    'salidas_hoy'            => "Today's departures",
+    'salidas_hacia_tigre'    => 'To Tigre',
+    'salidas_desde_tigre'    => 'From Tigre',
+    'llega_muelle_aprox'     => 'arrives ~:hora',
+    'sale_tigre_hora'        => 'departs Tigre :hora',
+    'sin_horarios_vuelta'    => 'No outbound schedules registered for today.',
+    'manana_label'           => 'Tomorrow',
+    'ya_salio'               => 'already left',
+    'salida_en_min'          => 'in :min min',
+    'salida_en_horas'        => 'in :h h :m min',
+    'confirmaron_n'          => '{1} 1 confirmed|[2,*] :count confirmed',
+    'confirmaron_demora'     => '{1} 1 confirmed the delay|[2,*] :count confirmed the delay',
+    'sin_confirmaciones'     => 'No confirmations yet',
+    'reportar_algo'          => 'report something',
+    'ya_lo_vi'               => 'got it',
+    'aviso_activo_label'     => 'Active alert',
+    'tolerancia_label'       => '± :min min',
+    'proxima_label'          => 'next',
+    'sin_muelle_elegido'     => 'Choose your dock to see your schedule',
+    'confirmar_salida'       => 'Confirm',
+    'que_esta_pasando'       => "What's happening?",
+
+    // Schedule visibility / grouping
+    'schedule_past_toggle_show' => ':count earlier',
+    'schedule_past_toggle_hide' => 'hide earlier',
+    'schedule_recent_hint'      => 'Did it run?',
+    'schedule_recent_ago'       => ':time ago',
+
+    // Sighting report panel
+    'sighting_panel_title'             => "What's going on?",
+    'sighting_panel_subtitle'          => 'Your report helps everyone leaving from this dock.',
+    'sighting_note_toggle_open'        => '+ Add detail',
+    'sighting_note_toggle_close'       => '− Remove detail',
+    'sighting_note_placeholder'        => 'Tell us more if you want...',
+    'sighting_submit_success_title'    => 'Thanks for the heads-up',
+    'sighting_submit_success_subtitle' => 'Your :type report is now visible to everyone.',
+    'sighting_btn_send'                => 'Send report',
+    'sighting_btn_cancel'              => 'Cancel',
+
+    // Departure reactions
+    'departure_reaction_negative_title'    => 'Something wrong?',
+    'departure_reaction_negative_subtitle' => 'Log in to report a delay or problem.',
+    'departure_reaction_login_cta'         => 'Report',
+    'departure_reaction_dismiss_cta'       => 'All good',
+    'departure_sighting_strip'             => ':type · :name · :time',
 
     // Descargo
     'disclaimer_horarios' => 'Schedules are community references and may not match actual service. For official information contact Interisleña directly.',

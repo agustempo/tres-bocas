@@ -47,10 +47,12 @@ Alpine.store('auth', {
     loginRemember: false,
 
     // Register fields
-    regName:     '',
-    regEmail:    '',
-    regPassword: '',
-    regConfirm:  '',
+    regName:       '',
+    regEmail:      '',
+    regPassword:   '',
+    regConfirm:    '',
+    regMuelleId:   null,   // int | 'nuevo' | null
+    regMuelleNuevo: '',    // new muelle name when regMuelleId === 'nuevo'
 
     init() {
         // Global escape handler
@@ -79,8 +81,10 @@ Alpine.store('auth', {
     },
 
     switchTo(form) {
-        this.form   = form;
-        this.errors = {};
+        this.form          = form;
+        this.errors        = {};
+        this.regMuelleId   = null;
+        this.regMuelleNuevo = '';
         this._focusFirst();
     },
 
@@ -155,6 +159,8 @@ Alpine.store('auth', {
                     email:                 this.regEmail,
                     password:              this.regPassword,
                     password_confirmation: this.regConfirm,
+                    preferred_muelle_id:   this.regMuelleId !== 'nuevo' ? this.regMuelleId : null,
+                    nuevo_muelle_nombre:   this.regMuelleId === 'nuevo'  ? this.regMuelleNuevo : null,
                 }),
             });
 

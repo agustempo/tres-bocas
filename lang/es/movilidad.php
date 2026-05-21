@@ -18,11 +18,13 @@ return [
     'tipo_especial'         => 'Servicio especial',
 
     // Avistajes — tipos
-    'avistaje_paso'      => 'Pasó y paró',
-    'avistaje_embarco'   => 'Embarcó',
-    'avistaje_no_paro'   => 'Pasó sin parar',
-    'avistaje_cancelado' => 'No vino / Cancelado',
-    'avistaje_demorado'  => 'Viene demorado',
+    'avistaje_paso'             => 'Pasó y paró',
+    'avistaje_embarco'          => 'Embarcó',
+    'avistaje_no_paro'          => 'Pasó sin parar',
+    'avistaje_cancelado'        => 'No vino / Cancelado',
+    'avistaje_demorado'         => 'Viene demorado',
+    'avistaje_problema_muelle'  => 'Problema en el muelle',
+    'avistaje_otro'             => 'Otra situación',
 
     // Avistajes — UI
     'avistaje_reportar'        => '¿Lo viste?',
@@ -116,6 +118,54 @@ return [
     'confidence_oficial'       => 'Horario oficial',
     'confidence_comunidad'     => 'Dato comunitario',
     'confidence_estimado'      => 'Estimado — sin datos suficientes',
+
+    // Horarios personales
+    'horarios_titulo'        => 'Horarios de hoy',
+    'salidas_hoy'            => 'Salidas de hoy',
+    'salidas_hacia_tigre'    => 'Hacia Tigre',
+    'salidas_desde_tigre'    => 'Desde Tigre',
+    'llega_muelle_aprox'     => 'llega ~:hora',
+    'sale_tigre_hora'        => 'sale Tigre :hora',
+    'sin_horarios_vuelta'    => 'Sin horarios hacia Tigre registrados para hoy.',
+    'manana_label'           => 'Mañana',
+    'ya_salio'               => 'ya salió',
+    'salida_en_min'          => 'en :min min',
+    'salida_en_horas'        => 'en :h h :m min',
+    'confirmaron_n'          => '{1} 1 confirmó|[2,*] :count confirmaron',
+    'confirmaron_demora'     => '{1} 1 confirmó la demora|[2,*] :count confirmaron la demora',
+    'sin_confirmaciones'     => 'Sin confirmaciones aún',
+    'reportar_algo'          => 'reportar algo',
+    'ya_lo_vi'               => 'ya lo vi',
+    'aviso_activo_label'     => 'Aviso activo',
+    'tolerancia_label'       => '± :min min',
+    'proxima_label'          => 'próxima',
+    'sin_muelle_elegido'     => 'Elegí tu muelle para ver tus horarios',
+    'confirmar_salida'       => 'Confirmar',
+    'que_esta_pasando'       => '¿Qué está pasando?',
+
+    // Visibilidad y agrupación de salidas en /horarios
+    'schedule_past_toggle_show' => ':count anteriores',
+    'schedule_past_toggle_hide' => 'ocultar anteriores',
+    'schedule_recent_hint'      => '¿Pasó?',
+    'schedule_recent_ago'       => 'hace :time',
+
+    // Panel de reporte de avistaje (sighting form)
+    'sighting_panel_title'             => '¿Qué está pasando?',
+    'sighting_panel_subtitle'          => 'Tu aviso ayuda a todos los que salen desde este muelle.',
+    'sighting_note_toggle_open'        => '+ Agregar detalle',
+    'sighting_note_toggle_close'       => '− Quitar detalle',
+    'sighting_note_placeholder'        => 'Contá más si querés...',
+    'sighting_submit_success_title'    => 'Gracias por avisar',
+    'sighting_submit_success_subtitle' => 'Tu aviso de :type ya está visible para todos.',
+    'sighting_btn_send'                => 'Enviar aviso',
+    'sighting_btn_cancel'              => 'Cancelar',
+
+    // Reacciones en tarjetas de salida
+    'departure_reaction_negative_title'    => '¿Pasó algo?',
+    'departure_reaction_negative_subtitle' => 'Iniciá sesión para reportar una demora o problema.',
+    'departure_reaction_login_cta'         => 'Reportar',
+    'departure_reaction_dismiss_cta'       => 'Está bien',
+    'departure_sighting_strip'             => ':type · :name · :time',
 
     // Descargo
     'disclaimer_horarios' => 'Los horarios son referencias comunitarias y pueden no coincidir con el servicio real. Para información oficial consultá directamente a Interisleña.',
