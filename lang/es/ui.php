@@ -151,6 +151,22 @@ return [
     'tide_trend_falling'   => 'Bajando',
     'tide_trend_stable'    => 'Estable',
 
+    // ── Tide chart (INA live data) ───────────────────────────────────────────
+    'tide_chart_subtitle'      => 'Nivel del río · San Fernando',
+    'tide_source_attribution'  => 'Fuente: INA · alerta.ina.gob.ar — datos en tiempo real, sin validar',
+    'tide_fallback_banner'     => 'Mostrando imagen del INA — datos en tiempo real no disponibles',
+    'tide_legend_observed'     => 'Observado',
+    'tide_legend_forecast'     => 'Pronóstico',
+    'tide_legend_error_band'   => 'Margen error',
+    'tide_threshold_alert'     => 'Alerta 3.0 m',
+    'tide_threshold_evacuation' => 'Evacuación 3.5 m',
+    'tide_normal_range'        => 'Normal 0.7–2.2 m',
+    'tide_range_2d'            => '2 días',
+    'tide_range_4d'            => '4 días',
+    'tide_range_7d'            => '7 días',
+    'tide_table_title'         => 'Próximas lecturas pronosticadas',
+    'tide_loading'             => 'Cargando…',
+
     // ── Marea page ───────────────────────────────────────────────────────────
     'marea_title'            => 'Marea',
     'tide_status_heading'    => 'Estado de la marea',
