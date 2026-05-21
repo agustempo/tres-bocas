@@ -18,11 +18,13 @@ return [
     'tipo_especial'         => 'Serviço especial',
 
     // Avistamentos — tipos
-    'avistaje_paso'      => 'Parou aqui',
-    'avistaje_embarco'   => 'Embarcou',
-    'avistaje_no_paro'   => 'Passou sem parar',
-    'avistaje_cancelado' => 'Não veio / Cancelado',
-    'avistaje_demorado'  => 'Atrasado',
+    'avistaje_paso'             => 'Parou aqui',
+    'avistaje_embarco'          => 'Embarcou',
+    'avistaje_no_paro'          => 'Passou sem parar',
+    'avistaje_cancelado'        => 'Não veio / Cancelado',
+    'avistaje_demorado'         => 'Atrasado',
+    'avistaje_problema_muelle'  => 'Problema no atracadouro',
+    'avistaje_outro'            => 'Outra situação',
 
     // Avistamentos — UI
     'avistaje_reportar'        => 'Você viu?',
@@ -108,6 +110,54 @@ return [
     // Relatar contexto
     'reportar_sobre'      => 'Relatar sobre :servicio em :muelle',
     'login_para_reportar' => 'Entre para relatar avistamentos',
+
+    // Horários pessoais
+    'horarios_titulo'        => 'Horários de hoje',
+    'salidas_hoy'            => 'Saídas de hoje',
+    'salidas_hacia_tigre'    => 'Para Tigre',
+    'salidas_desde_tigre'    => 'De Tigre',
+    'llega_muelle_aprox'     => 'chega ~:hora',
+    'sale_tigre_hora'        => 'sai de Tigre :hora',
+    'sin_horarios_vuelta'    => 'Sem horários de retorno registrados para hoje.',
+    'manana_label'           => 'Amanhã',
+    'ya_salio'               => 'já saiu',
+    'salida_en_min'          => 'em :min min',
+    'salida_en_horas'        => 'em :h h :m min',
+    'confirmaron_n'          => '{1} 1 confirmou|[2,*] :count confirmaram',
+    'confirmaron_demora'     => '{1} 1 confirmou o atraso|[2,*] :count confirmaram o atraso',
+    'sin_confirmaciones'     => 'Sem confirmações ainda',
+    'reportar_algo'          => 'relatar algo',
+    'ya_lo_vi'               => 'entendi',
+    'aviso_activo_label'     => 'Aviso ativo',
+    'tolerancia_label'       => '± :min min',
+    'proxima_label'          => 'próxima',
+    'sin_muelle_elegido'     => 'Escolha seu atracadouro para ver seus horários',
+    'confirmar_salida'       => 'Confirmar',
+    'que_esta_pasando'       => 'O que está acontecendo?',
+
+    // Visibilidade e agrupamento de saídas
+    'schedule_past_toggle_show' => ':count anteriores',
+    'schedule_past_toggle_hide' => 'ocultar anteriores',
+    'schedule_recent_hint'      => 'Passou?',
+    'schedule_recent_ago'       => 'há :time',
+
+    // Painel de reporte de avistamento
+    'sighting_panel_title'             => 'O que está acontecendo?',
+    'sighting_panel_subtitle'          => 'Seu aviso ajuda todos que partem deste atracadouro.',
+    'sighting_note_toggle_open'        => '+ Adicionar detalhe',
+    'sighting_note_toggle_close'       => '− Remover detalhe',
+    'sighting_note_placeholder'        => 'Conte mais se quiser...',
+    'sighting_submit_success_title'    => 'Obrigado pelo aviso',
+    'sighting_submit_success_subtitle' => 'Seu aviso de :type já está visível para todos.',
+    'sighting_btn_send'                => 'Enviar aviso',
+    'sighting_btn_cancel'              => 'Cancelar',
+
+    // Reações nos cartões de saída
+    'departure_reaction_negative_title'    => 'Algo errado?',
+    'departure_reaction_negative_subtitle' => 'Entre para reportar um atraso ou problema.',
+    'departure_reaction_login_cta'         => 'Reportar',
+    'departure_reaction_dismiss_cta'       => 'Tudo bem',
+    'departure_sighting_strip'             => ':type · :name · :time',
 
     // Descargo
     'disclaimer_horarios' => 'Os horários são referências comunitárias e podem não corresponder ao serviço real. Para informações oficiais consulte diretamente a Interisleña.',

@@ -24,7 +24,7 @@ class AvistajesController extends Controller
             'patron_id'    => ['nullable', 'integer', 'exists:patrones,id'],
             'hora_exacta'  => ['nullable', 'string', 'regex:/^\d{2}:\d{2}$/'],
             'hace_minutos' => ['nullable', 'integer', 'min:0', 'max:120'],
-            'tipo'         => ['required', 'in:paso,embarco,no_paro,cancelado,demorado'],
+            'tipo'         => ['required', 'in:paso,embarco,no_paro,cancelado,demorado,problema_muelle,otro'],
             'sentido'      => ['nullable', 'in:ida,vuelta'],
             'notas'        => ['nullable', 'string', 'max:500'],
         ]);
@@ -53,11 +53,7 @@ class AvistajesController extends Controller
             'confirmaciones' => 0,
         ]);
 
-        $muelle = Muelle::find($validated['muelle_id']);
-
-        return redirect()
-            ->route('movilidad.muelles.show', $muelle->slug)
-            ->with('success', __('movilidad.avistaje_reportar_accion'));
+        return back()->with('success', __('movilidad.avistaje_reportar_accion'));
     }
 
     public function confirmar(Request $request, int $id)
@@ -85,10 +81,6 @@ class AvistajesController extends Controller
 
         $avistaje->increment('confirmaciones');
 
-        $muelle = $avistaje->muelle;
-
-        return redirect()
-            ->route('movilidad.muelles.show', $muelle->slug)
-            ->with('success', __('movilidad.avistaje_confirmar_accion'));
+        return back()->with('success', __('movilidad.avistaje_confirmar_accion'));
     }
 }

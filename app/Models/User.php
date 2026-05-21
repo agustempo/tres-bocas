@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Inquiry;
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'role',
         'avg_rating',
         'reviews_count',
+        'preferred_muelle_id',
     ];
 
     protected $hidden = [
@@ -35,6 +37,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function preferredMuelle(): BelongsTo
+    {
+        return $this->belongsTo(Muelle::class, 'preferred_muelle_id');
     }
 
     public function isAdmin(): bool

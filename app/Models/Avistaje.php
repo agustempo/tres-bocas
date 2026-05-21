@@ -56,25 +56,34 @@ class Avistaje extends Model
     public function tipoLabel(): string
     {
         return match($this->tipo) {
-            'paso'      => __('movilidad.avistaje_paso'),
-            'embarco'   => __('movilidad.avistaje_embarco'),
-            'no_paro'   => __('movilidad.avistaje_no_paro'),
-            'cancelado' => __('movilidad.avistaje_cancelado'),
-            'demorado'  => __('movilidad.avistaje_demorado'),
-            default     => $this->tipo,
+            'paso'             => __('movilidad.avistaje_paso'),
+            'embarco'          => __('movilidad.avistaje_embarco'),
+            'no_paro'          => __('movilidad.avistaje_no_paro'),
+            'cancelado'        => __('movilidad.avistaje_cancelado'),
+            'demorado'         => __('movilidad.avistaje_demorado'),
+            'problema_muelle'  => __('movilidad.avistaje_problema_muelle'),
+            'otro'             => __('movilidad.avistaje_otro'),
+            default            => $this->tipo,
         };
     }
 
     public function tipoIcono(): string
     {
         return match($this->tipo) {
-            'paso'      => '✓',
-            'embarco'   => '🛥',
-            'no_paro'   => '→',
-            'cancelado' => '✗',
-            'demorado'  => '⏱',
-            default     => '•',
+            'paso'            => '✓',
+            'embarco'         => '✓',
+            'no_paro'         => '✗',
+            'cancelado'       => '✗',
+            'demorado'        => '⏱',
+            'problema_muelle' => '⚠',
+            'otro'            => '⚠',
+            default           => '•',
         };
+    }
+
+    public function esIncidente(): bool
+    {
+        return in_array($this->tipo, ['demorado', 'cancelado', 'no_paro', 'problema_muelle', 'otro']);
     }
 
     public function esFresco(): bool

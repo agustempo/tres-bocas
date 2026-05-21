@@ -19,7 +19,7 @@
             {{-- ── CATEGORY CAROUSEL ── --}}
             <div class="py-5 border-b border-gray-100 dark:border-gray-800">
                 <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <a href="{{ route('home') }}"
+                    <a href="{{ route('servicios.index') }}"
                        class="shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors duration-150
                               {{ !$catSlug && !$search ? 'bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:border-gray-500' }}">
                         {{ __('ui.categories') }} &mdash; {{ __('ui.home') }}
@@ -47,7 +47,7 @@
                             </div>
                             <p class="text-gray-500 text-lg font-medium dark:text-gray-400">{{ __('ui.no_results') }}</p>
                             <p class="text-gray-400 text-sm mt-1">
-                                <a href="{{ route('home') }}" class="text-rose-500 hover:underline">
+                                <a href="{{ route('servicios.index') }}" class="text-rose-500 hover:underline">
                                     {{ __('ui.browse_all') }}
                                 </a>
                             </p>
