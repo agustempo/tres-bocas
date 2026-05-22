@@ -32,7 +32,8 @@
                 :proximo="$proximoPaso"
                 :servicio="$servicioPrincipal ?? null" />
 
-            {{-- ── Grid desktop ─────────────────────────────────────────────── --}}
+            @auth
+            {{-- ── Grid desktop (usuarios logueados) ──────────────────────── --}}
             <div class="dash-grid space-y-4 lg:space-y-0">
 
                 {{-- Columna izquierda: lancha + listings/admin --}}
@@ -48,7 +49,6 @@
 
                     {{-- Servicios / Admin --}}
                     @if (!auth()->user()->isAdmin())
-
                         <div class="space-y-3">
                             <div class="flex items-center justify-between px-1">
                                 <p class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
@@ -113,29 +113,32 @@
                                 @endif
                             @endif
                         </div>
-
                     @endif
 
                 </div>
 
                 {{-- Columna derecha: datos ambientales --}}
                 <div class="dash-col-env space-y-4 lg:space-y-0">
-
-                    {{-- Marea + Tiempo --}}
                     <div class="dash-tide-row" style="display:grid; grid-template-columns:repeat(2,1fr); gap:0.75rem">
                         <x-dashboard.tide-summary-card :tide="$tide" />
                         <x-dashboard.weather-summary-card :tide="$tide" />
                     </div>
-
-                    {{-- Próximas mareas --}}
-                    <x-dashboard.upcoming-tides :tide="$tide" />
-
-                    {{-- Pronóstico por hora --}}
+                    <x-tide-mini-chart :tide="$tide" />
                     <x-dashboard.hourly-weather :tide="$tide" />
-
                 </div>
 
             </div>{{-- end dash-grid --}}
+            @else
+            {{-- ── Solo datos ambientales para visitantes ───────────────────── --}}
+            <div class="space-y-4">
+                <div class="dash-tide-row" style="display:grid; grid-template-columns:repeat(2,1fr); gap:0.75rem">
+                    <x-dashboard.tide-summary-card :tide="$tide" />
+                    <x-dashboard.weather-summary-card :tide="$tide" />
+                </div>
+                <x-tide-mini-chart :tide="$tide" />
+                <x-dashboard.hourly-weather :tide="$tide" />
+            </div>
+            @endauth
 
         </div>
     </div>

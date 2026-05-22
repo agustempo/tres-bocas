@@ -167,9 +167,85 @@ return [
     'tide_table_title'         => 'Próximas lecturas pronosticadas',
     'tide_loading'             => 'Cargando…',
 
-    // ── Marea page ───────────────────────────────────────────────────────────
+    // ── Marea page — three-source redesign ──────────────────────────────────
     'marea_title'            => 'Marea',
-    'tide_status_heading'    => 'Estado de la marea',
+    'tide_status_heading'    => 'Estado actual',
+
+    // Source badges
+    'tide_src_shn_obs'       => 'SHN · observado',
+    'tide_src_shn_pro'       => 'SHN · pronóstico',
+    'tide_src_ina'           => 'INA · modelo',
+
+    // Source descriptions
+    'tide_src_shn_obs_desc'  => 'Medición en tiempo real del mareógrafo.',
+    'tide_src_shn_pro_desc'  => 'Pronóstico astronómico basado en ciclos lunares y solares. Muy preciso en el horario, menos en el nivel cuando hay viento.',
+    'tide_src_ina_desc'      => 'Modelo matemático hidráulico. Incluye caudal del Paraná, nivel del Río de la Plata y viento previsto. Más útil en tiempo inestable.',
+
+    // Trust guide
+    'tide_when_to_trust_title'  => '¿Cuándo confiar en cada uno?',
+    'tide_when_to_trust_normal' => 'Días normales: el SHN pronóstico es muy preciso.',
+    'tide_when_to_trust_se'     => 'Con viento SE sostenido: el INA captura mejor el nivel real.',
+    'tide_when_to_trust_diff'   => 'Si difieren más de 0.20 m: algo meteorológico está influyendo — prestá atención.',
+
+    // Operational summary phrases
+    'tide_summary_rising'     => 'El nivel sube.',
+    'tide_summary_falling'    => 'El nivel baja.',
+    'tide_summary_stable'     => 'El nivel se mantiene estable.',
+    'tide_summary_next_min'   => ':day a las :time se espera una bajante de :value m (INA).',
+    'tide_summary_next_max'   => ':day a las :time se espera una pleamar de :value m (INA).',
+    'tide_summary_agree'      => 'El SHN coincide en el horario.',
+    'tide_summary_low_warn'   => 'Nivel bajo — posible calado reducido en lanchas.',
+    'tide_summary_high_warn'  => 'Nivel alto — el muelle puede estar bajo el agua.',
+
+    // Events grid
+    'tide_events_title'       => 'Próximos eventos · Todas las fuentes',
+    'tide_event_max'          => 'Máxima',
+    'tide_event_min'          => 'Mínima',
+    'tide_event_also_ina'     => 'INA: :value m',
+
+    // Comparison card
+    'tide_comparison_title'        => 'Próxima :kind — Dos pronósticos',
+    'tide_comparison_subtitle'     => 'Ambas fuentes coinciden en el horario, difieren en el nivel',
+    'tide_comparison_agree'        => 'Coinciden — pronóstico confiable',
+    'tide_comparison_minor_diff'   => 'Diferencia menor — dentro del margen normal',
+    'tide_comparison_notable_diff' => 'Diferencia notable — puede haber factor meteorológico',
+    'tide_comparison_diff_label'   => 'Diferencia de :diff m',
+    'tide_comparison_shn_method'   => 'Pronóstico astronómico. Considera ciclos lunares y solares. Muy preciso en el horario, menos en el nivel cuando hay viento.',
+    'tide_comparison_ina_method'   => 'Modelo matemático. Incluye caudal del Paraná, nivel del Río de la Plata y viento previsto. Más útil cuando hay sudestada.',
+
+    // Alarms
+    'tide_alarm_low'              => 'Bajante importante — posible calado reducido',
+    'tide_alarm_extreme_low'      => 'Bajante extrema — navegación muy difícil',
+    'tide_alarm_high'             => 'Pleamar alta — muelle puede estar bajo el agua',
+    'tide_alarm_very_high'        => 'Nivel muy alto — riesgo de inundación en zonas bajas',
+    'tide_alarm_alert_level'      => 'ALERTA — nivel de alerta hidrológica',
+    'tide_alarm_low_implication'  => 'Las primeras lanchas del día pueden tener dificultades de calado. Consultá con tu muelle antes de salir.',
+    'tide_alarm_high_implication' => 'El muelle puede estar total o parcialmente bajo el agua.',
+
+    // Critical event card
+    'tide_critical_heading'      => 'Próximo evento crítico',
+    'tide_critical_low'          => 'Las lanchas pueden tener dificultades de calado.',
+    'tide_critical_high'         => 'El muelle puede estar bajo el agua.',
+    'tide_critical_very_high'    => 'Riesgo de inundación en zonas bajas.',
+    'tide_wind_se_warning'       => 'SE sostenido — puede elevar el nivel',
+
+    // Sudestada card
+    'tide_sudestada_title'       => '¿Por qué el viento SE sube el nivel del río?',
+    'tide_sudestada_body'        => 'El viento del sudeste empuja el agua del Río de la Plata hacia el Delta, elevando el nivel por encima de lo que predice el ciclo astronómico. A mayor velocidad y duración, mayor es la suba.',
+    'tide_sudestada_warning'     => 'Viento SE sostenido — el nivel puede superar el pronóstico del INA.',
+
+    // Chart
+    'tide_chart_section'         => 'Gráfico de nivel',
+    'tide_chart_disclaimer'      => 'SHN pronóstico y INA modelo pueden diferir — son métodos distintos. Datos sin validar.',
+    'tide_legend_shn_obs'        => 'SHN obs',
+    'tide_legend_shn_pro'        => 'SHN pron',
+    'tide_legend_ina'            => 'INA modelo',
+    'tide_legend_wind'           => 'Viento SE',
+
+    // Fuentes section
+    'tide_fuentes_title'         => 'Fuentes y metodología',
+    'tide_three_sources_title'   => 'Tres fuentes, tres roles',
+    'tide_observed_section'      => 'Alturas horarias observadas (SHN)',
     'last_updated'           => 'Última actualización:',
     'update_link'            => 'actualizar',
     'tide_error_title'       => 'No se pudo obtener la información de marea en este momento.',
@@ -210,6 +286,7 @@ return [
     'view_full_schedule'       => 'Ver horarios completos',
     'change_dock'              => 'cambiar',
     'upcoming_tides_heading'   => 'Próximas mareas',
+    'tide_mini_see_all'        => 'Ver mareas completas',
     'hourly_forecast_heading'  => 'Pronóstico por hora',
     'wind_navigable'           => 'Navegable',
     'wind_caution'             => 'Precaución',

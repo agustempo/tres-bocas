@@ -240,21 +240,8 @@
                     </svg>
                 </a>
 
-                {{-- Primary icon: Horarios --}}
-                <a href="{{ route('horarios.index') }}"
-                   title="{{ __('ui.nav_horarios') }}"
-                   class="flex items-center justify-center w-8 h-8 rounded-full border transition-colors
-                          {{ request()->routeIs('horarios.*')
-                              ? 'border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400'
-                              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-200' }}">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="9"/>
-                        <path stroke-linecap="round" d="M12 7v5l3 2"/>
-                    </svg>
-                </a>
-
-                {{-- ── Overflow hamburger menu ── --}}
-                <div x-data="{ menuOpen: false }" class="relative">
+                {{-- ── Overflow hamburger menu (mobile only) ── --}}
+                <div x-data="{ menuOpen: false }" class="relative sm:hidden">
                     <button @click="menuOpen = !menuOpen"
                             @keydown.escape.window="menuOpen = false"
                             title="Menú"
@@ -295,20 +282,6 @@
                             {{ __('ui.home') }}
                         </a>
 
-                        {{-- Horarios --}}
-                        <a href="{{ route('horarios.index') }}"
-                           @click="menuOpen = false"
-                           class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
-                                  {{ request()->routeIs('horarios.*')
-                                      ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 font-medium'
-                                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50' }}">
-                            <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="9"/>
-                                <path stroke-linecap="round" d="M12 7v5l3 2"/>
-                            </svg>
-                            {{ __('ui.nav_horarios') }}
-                        </a>
-
                         {{-- Condiciones --}}
                         <a href="{{ route('marea.index') }}"
                            @click="menuOpen = false"
@@ -320,31 +293,6 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.5c1.5-2.5 3-3.5 4.5-3.5S10.5 11 12 11s3-1 4.5-1 3 1 4.5 1M3 8c1.5-2.5 3-3.5 4.5-3.5S10.5 5.5 12 5.5s3-1 4.5-1 3 1 4.5 1"/>
                             </svg>
                             {{ __('ui.nav_condiciones') }}
-                        </a>
-
-                        <div class="my-1 border-t border-gray-100 dark:border-gray-700"></div>
-
-                        {{-- Servicios (beta) --}}
-                        <a href="{{ route('servicios.index') }}"
-                           @click="menuOpen = false"
-                           class="block px-4 py-2.5 text-sm transition-colors
-                                  {{ request()->routeIs('servicios.*') || request()->routeIs('listings.*')
-                                      ? 'bg-gray-50 dark:bg-gray-700/50'
-                                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50' }}">
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <span class="{{ request()->routeIs('servicios.*') || request()->routeIs('listings.*')
-                                    ? 'text-gray-900 dark:text-gray-100 font-medium'
-                                    : 'text-gray-700 dark:text-gray-300' }}">
-                                    {{ __('ui.nav_servicios') }}
-                                </span>
-                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                                             bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
-                                    {{ __('ui.nav_services_badge') }}
-                                </span>
-                            </div>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 leading-snug">
-                                {{ __('ui.nav_services_beta_description') }}
-                            </p>
                         </a>
 
                         <div class="my-1 border-t border-gray-100 dark:border-gray-700"></div>
@@ -396,55 +344,24 @@
                     </div>
                 </div>
 
-                {{-- ── Theme selector ── --}}
-                <div x-data="{ themeOpen: false }" class="relative">
-                    <button @click="themeOpen = !themeOpen"
-                            @keydown.escape="themeOpen = false"
-                            title="Apariencia"
-                            class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700
-                                   bg-white dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
-                        <svg x-show="!$store.theme.isDark" x-cloak
-                             class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707
-                                     M17.657 17.657l.707.707M6.343 6.343l.707.707M12 7a5 5 0 100 10A5 5 0 0012 7z"/>
-                        </svg>
-                        <svg x-show="$store.theme.isDark"
-                             class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                    </button>
-                    <div x-show="themeOpen" x-cloak @click.outside="themeOpen = false"
-                         x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                        <button @click="$store.theme.set('light'); themeOpen = false"
-                                class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                                :class="$store.theme.current === 'light' ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-700 dark:text-gray-300'">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707 M17.657 17.657l.707.707M6.343 6.343l.707.707M12 7a5 5 0 100 10A5 5 0 0012 7z"/>
-                            </svg>
-                            Claro
-                        </button>
-                        <button @click="$store.theme.set('system'); themeOpen = false"
-                                class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                                :class="$store.theme.current === 'system' ? 'text-teal-600 dark:text-teal-400 font-semibold' : 'text-gray-700 dark:text-gray-300'">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            Sistema
-                        </button>
-                        <button @click="$store.theme.set('dark'); themeOpen = false"
-                                class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                                :class="$store.theme.current === 'dark' ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-700 dark:text-gray-300'">
-                            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                            </svg>
-                            Oscuro
-                        </button>
-                    </div>
-                </div>
+                {{-- ── Theme toggle ── --}}
+                <button x-data="{}"
+                        @click="$store.theme.toggle()"
+                        :title="$store.theme.isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+                        class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700
+                               bg-white dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                    <svg x-show="!$store.theme.isDark" x-cloak
+                         class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707
+                                 M17.657 17.657l.707.707M6.343 6.343l.707.707M12 7a5 5 0 100 10A5 5 0 0012 7z"/>
+                    </svg>
+                    <svg x-show="$store.theme.isDark"
+                         class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
 
                 {{-- ── Language selector ── --}}
                 <div x-data="{ langOpen: false }" class="relative">

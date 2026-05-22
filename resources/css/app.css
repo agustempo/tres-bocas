@@ -2,6 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Tide & source color tokens ── */
+:root {
+    /* Legacy single-source tokens (kept for tide-chart / tide-mini-chart) */
+    --color-tide-observed: #0D9E74;
+    --color-tide-forecast: #0A7D5C;
+    --color-tide-band:     #0D9E74;
+
+    /* Three-source tokens for the redesigned marea page */
+    --color-shn-obs:  #0D9E74;   /* teal  — SHN observado  */
+    --color-shn-pro:  #2F7DC0;   /* blue  — SHN pronóstico */
+    --color-ina:      #7B5EA7;   /* violet — INA modelo    */
+    --color-wind-se:  #5B9BD5;   /* sky-blue — Viento SE   */
+}
+.dark {
+    --color-tide-observed: #9FE1CB;
+    --color-tide-forecast: #1D9E75;
+    --color-tide-band:     #1D9E75;
+
+    --color-shn-obs:  #9FE1CB;
+    --color-shn-pro:  #6AACDE;
+    --color-ina:      #B8A0E8;
+    --color-wind-se:  #6AACDE;
+}
+
+/* ── Source badge helper (apply alongside Tailwind classes) ── */
+.src-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border-width: 1px;
+    border-style: solid;
+    line-height: 1.4;
+}
+.src-badge.shn-obs { background: rgba(13,158,116,.13);  color: #0D9E74; border-color: rgba(13,158,116,.3); }
+.src-badge.shn-pro { background: rgba(47,125,192,.13);  color: #2F7DC0; border-color: rgba(47,125,192,.3); }
+.src-badge.ina     { background: rgba(123,94,167,.13);  color: #7B5EA7; border-color: rgba(123,94,167,.3); }
+.dark .src-badge.shn-obs { background: rgba(159,225,203,.1); color: #9FE1CB; border-color: rgba(159,225,203,.25); }
+.dark .src-badge.shn-pro { background: rgba(106,172,222,.1); color: #6AACDE; border-color: rgba(106,172,222,.25); }
+.dark .src-badge.ina     { background: rgba(184,160,232,.1); color: #B8A0E8; border-color: rgba(184,160,232,.25); }
+
 /* ── Smooth theme transitions (avoids jarring flash on switch) ── */
 *, *::before, *::after {
     transition-property: background-color, border-color, color, fill, stroke;

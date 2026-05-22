@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ina' => [
+        'observed_series_id' => env('INA_OBSERVED_SERIES_ID', 52),
+        'forecast_series_id' => env('INA_FORECAST_SERIES_ID', 26202),
+        'forecast_cal_id'    => env('INA_FORECAST_CAL_ID', 432),
+    ],
+
 ];

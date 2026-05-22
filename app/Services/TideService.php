@@ -402,11 +402,103 @@ class TideService
         return $this->classifyLevel((float) $current['level']);
     }
 
+    // ─── Chart series builders ────────────────────────────────────────────────
+
+    /**
+     * Convert SHN hourly readings (only HH:MM, no date) to ISO-timestamped series.
+     * Approximates the date: if a reading time is >30 min in the future, it belongs to yesterday.
+     */
+    public function buildObservedSeries(?array $hourly): array
+    {
+        if (empty($hourly)) {
+            return [];
+        }
+
+        $tz  = self::TZ;
+        $now = Carbon::now($tz);
+
+        $result = [];
+        foreach ($hourly as $entry) {
+            if (! preg_match('/^(\d{1,2}):(\d{2})$/', $entry['hour'], $m)) {
+                continue;
+            }
+            $val = (float) str_replace(',', '.', $entry['level'] ?? '0');
+            if ($val <= 0) {
+                continue;
+            }
+
+            $candidate = $now->copy()->setHour((int) $m[1])->setMinute((int) $m[2])->setSecond(0);
+
+            // If this HH:MM is more than 30 min ahead of now, it must be yesterday's reading
+            if ($candidate->gt($now->copy()->addMinutes(30))) {
+                $candidate->subDay();
+            }
+
+            $result[] = [
+                'time'  => $candidate->format('c'),
+                'value' => round($val, 3),
+            ];
+        }
+
+        usort($result, fn ($a, $b) => strcmp($a['time'], $b['time']));
+
+        return $result;
+    }
+
+    /**
+     * Convert SHN forecast extremes (Pleamar/Bajante with explicit dates) to
+     * ISO-timestamped discrete points for the chart.
+     */
+    public function buildForecastSeries(?array $forecast): array
+    {
+        if (empty($forecast)) {
+            return [];
+        }
+
+        $tz     = self::TZ;
+        $result = [];
+
+        foreach ($forecast as $entry) {
+            $date = $entry['date'] ?? '';
+            $time = $entry['time'] ?? '';
+
+            if ($date === '' || $date === '---' || $time === '' || $time === '---') {
+                continue;
+            }
+            if (! preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $date, $dm)) {
+                continue;
+            }
+            if (! preg_match('/^(\d{1,2}):(\d{2})$/', $time, $tm)) {
+                continue;
+            }
+
+            $val = (float) str_replace(',', '.', $entry['level'] ?? '0');
+            if ($val <= 0) {
+                continue;
+            }
+
+            $ts = Carbon::create((int) $dm[3], (int) $dm[2], (int) $dm[1], (int) $tm[1], (int) $tm[2], 0, $tz);
+
+            $result[] = [
+                'time'      => $ts->format('c'),
+                'value'     => round($val, 3),
+                'kind'      => str_contains(mb_strtolower($entry['type']), 'plea') ? 'max' : 'min',
+                'label'     => $entry['type'],
+                'status'    => $entry['status'],
+                'day_label' => $entry['day_label'] ?? '',
+            ];
+        }
+
+        usort($result, fn ($a, $b) => strcmp($a['time'], $b['time']));
+
+        return $result;
+    }
+
     /**
      * Single source of truth for level → status classification.
      * Called for both the current reading and each forecast event.
      */
-    private function classifyLevel(float $level): array
+    public function classifyLevel(float $level): array
     {
         return match (true) {
             $level >= 2.40 => ['label' => 'tide_label_very_high', 'color' => 'red',    'message' => null],

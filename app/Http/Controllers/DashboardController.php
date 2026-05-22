@@ -18,51 +18,58 @@ class DashboardController extends Controller
 
     public function index(): View
     {
-        $user = auth()->user();
-
-        if ($user->isAdmin()) {
-            $totalListings     = Listing::count();
-            $publishedListings = Listing::where('status', 'published')->count();
-            $pendingReviews    = Review::where('approved', false)->count();
-            $myListings        = null;
-        } else {
-            $totalListings     = $user->listings()->count();
-            $publishedListings = $user->listings()->where('status', 'published')->count();
-            $pendingReviews    = Review::whereHas('listing', fn ($q) => $q->where('user_id', $user->id))
-                                       ->where('approved', false)
-                                       ->count();
-            $myListings        = $user->listings()->with('category')->latest()->get();
-        }
-
         $tide = $this->tideService->getData();
 
-        $muelle            = $user->preferredMuelle;
-        $proximoPaso       = null;
-        $servicioPrincipal = null;
-        $avistajeProximo   = null;
+        $totalListings         = 0;
+        $publishedListings     = 0;
+        $pendingReviews        = 0;
+        $myListings            = null;
+        $muelle                = null;
+        $proximoPaso           = null;
+        $servicioPrincipal     = null;
+        $avistajeProximo       = null;
         $confirmacionesProximo = 0;
+        $miReaccion            = '';
 
-        $miReaccion = '';
+        $user = auth()->user();
 
-        if ($muelle) {
-            $servicioPrincipal = $muelle->servicios()->where('activo', true)->first();
-            if ($servicioPrincipal) {
-                $proximoPaso = $this->movilidad->estimarProximoPaso($muelle->id, $servicioPrincipal->id);
+        if ($user) {
+            if ($user->isAdmin()) {
+                $totalListings     = Listing::count();
+                $publishedListings = Listing::where('status', 'published')->count();
+                $pendingReviews    = Review::where('approved', false)->count();
+            } else {
+                $totalListings     = $user->listings()->count();
+                $publishedListings = $user->listings()->where('status', 'published')->count();
+                $pendingReviews    = Review::whereHas('listing', fn ($q) => $q->where('user_id', $user->id))
+                                           ->where('approved', false)
+                                           ->count();
+                $myListings        = $user->listings()->with('category')->latest()->get();
+            }
 
-                if ($proximoPaso && ($patron = $proximoPaso['patron'] ?? null)) {
-                    $avistajeProximo = Avistaje::where('patron_id', $patron->id)
-                        ->whereIn('tipo', ['demorado', 'cancelado', 'no_paro', 'problema_muelle', 'otro'])
-                        ->whereDate('hora_evento', today())
-                        ->where('hora_evento', '>=', now()->subHours(3))
-                        ->orderByDesc('confirmaciones')
-                        ->first();
+            $muelle = $user->preferredMuelle;
 
-                    $confirmacionesProximo = Avistaje::where('patron_id', $patron->id)
-                        ->whereIn('tipo', ['paso', 'embarco'])
-                        ->whereDate('hora_evento', today())
-                        ->sum('confirmaciones');
+            if ($muelle) {
+                $servicioPrincipal = $muelle->servicios()->where('activo', true)->first();
 
-                    $miReaccion = session("departure_reaction_{$patron->id}", '');
+                if ($servicioPrincipal) {
+                    $proximoPaso = $this->movilidad->estimarProximoPaso($muelle->id, $servicioPrincipal->id);
+
+                    if ($proximoPaso && ($patron = $proximoPaso['patron'] ?? null)) {
+                        $avistajeProximo = Avistaje::where('patron_id', $patron->id)
+                            ->whereIn('tipo', ['demorado', 'cancelado', 'no_paro', 'problema_muelle', 'otro'])
+                            ->whereDate('hora_evento', today())
+                            ->where('hora_evento', '>=', now()->subHours(3))
+                            ->orderByDesc('confirmaciones')
+                            ->first();
+
+                        $confirmacionesProximo = Avistaje::where('patron_id', $patron->id)
+                            ->whereIn('tipo', ['paso', 'embarco'])
+                            ->whereDate('hora_evento', today())
+                            ->sum('confirmaciones');
+
+                        $miReaccion = session("departure_reaction_{$patron->id}", '');
+                    }
                 }
             }
         }

@@ -167,9 +167,75 @@ return [
     'tide_table_title'         => 'Upcoming forecast readings',
     'tide_loading'             => 'Loading…',
 
-    // ── Marea page ───────────────────────────────────────────────────────────
+    // ── Marea page — three-source redesign ──────────────────────────────────
     'marea_title'            => 'Tides',
-    'tide_status_heading'    => 'Tide status',
+    'tide_status_heading'    => 'Current status',
+
+    'tide_src_shn_obs'       => 'SHN · observed',
+    'tide_src_shn_pro'       => 'SHN · forecast',
+    'tide_src_ina'           => 'INA · model',
+
+    'tide_src_shn_obs_desc'  => 'Real-time reading from the tide gauge.',
+    'tide_src_shn_pro_desc'  => 'Astronomical tide prediction based on lunar and solar cycles. Very accurate for timing, less so for level when wind is a factor.',
+    'tide_src_ina_desc'      => 'Hydraulic mathematical model. Accounts for Paraná river flow, Río de la Plata level, and forecast wind. More useful in unstable weather.',
+
+    'tide_when_to_trust_title'  => 'When to trust each source?',
+    'tide_when_to_trust_normal' => 'Normal days: SHN forecast is very accurate.',
+    'tide_when_to_trust_se'     => 'With sustained SE wind: INA better captures the actual level.',
+    'tide_when_to_trust_diff'   => 'If they differ by more than 0.20 m: a weather factor is at play — pay attention.',
+
+    'tide_summary_rising'     => 'The level is rising.',
+    'tide_summary_falling'    => 'The level is falling.',
+    'tide_summary_stable'     => 'The level is stable.',
+    'tide_summary_next_min'   => ':day at :time a low of :value m is expected (INA).',
+    'tide_summary_next_max'   => ':day at :time a high of :value m is expected (INA).',
+    'tide_summary_agree'      => 'SHN agrees on the timing.',
+    'tide_summary_low_warn'   => 'Low level — possible draft reduction for ferries.',
+    'tide_summary_high_warn'  => 'High level — dock may be underwater.',
+
+    'tide_events_title'       => 'Upcoming events · All sources',
+    'tide_event_max'          => 'High',
+    'tide_event_min'          => 'Low',
+    'tide_event_also_ina'     => 'INA: :value m',
+
+    'tide_comparison_title'        => 'Next :kind — Two forecasts',
+    'tide_comparison_subtitle'     => 'Both sources agree on timing, differ on level',
+    'tide_comparison_agree'        => 'Agree — reliable forecast',
+    'tide_comparison_minor_diff'   => 'Minor difference — within normal margin',
+    'tide_comparison_notable_diff' => 'Notable difference — possible weather factor',
+    'tide_comparison_diff_label'   => 'Difference: :diff m',
+    'tide_comparison_shn_method'   => 'Astronomical forecast. Based on lunar and solar cycles. Very accurate for timing, less so when wind affects the level.',
+    'tide_comparison_ina_method'   => 'Mathematical model. Includes Paraná flow, Río de la Plata level, and forecast wind. More useful during sudestada events.',
+
+    'tide_alarm_low'              => 'Significant low tide — possible draft reduction',
+    'tide_alarm_extreme_low'      => 'Extreme low tide — navigation very difficult',
+    'tide_alarm_high'             => 'High tide — dock may be underwater',
+    'tide_alarm_very_high'        => 'Very high level — flood risk in low areas',
+    'tide_alarm_alert_level'      => 'ALERT — hydrological alert level',
+    'tide_alarm_low_implication'  => 'Early ferries may have draft difficulties. Check with your dock before departing.',
+    'tide_alarm_high_implication' => 'The dock may be fully or partially underwater.',
+
+    // Critical event card
+    'tide_critical_heading'      => 'Next critical event',
+    'tide_critical_low'          => 'Ferries may have draught difficulties.',
+    'tide_critical_high'         => 'The dock may be underwater.',
+    'tide_critical_very_high'    => 'Risk of flooding in low-lying areas.',
+    'tide_wind_se_warning'       => 'Sustained SE — may raise the water level',
+
+    'tide_sudestada_title'       => 'Why does SE wind raise the river level?',
+    'tide_sudestada_body'        => 'Southeast wind pushes water from the Río de la Plata into the Delta, raising the level above astronomical predictions. The stronger and longer the wind, the greater the rise.',
+    'tide_sudestada_warning'     => 'Sustained SE wind — level may exceed INA forecast.',
+
+    'tide_chart_section'         => 'Level chart',
+    'tide_chart_disclaimer'      => 'SHN forecast and INA model may differ — they use different methods. Data unvalidated.',
+    'tide_legend_shn_obs'        => 'SHN obs',
+    'tide_legend_shn_pro'        => 'SHN pron',
+    'tide_legend_ina'            => 'INA model',
+    'tide_legend_wind'           => 'SE wind',
+
+    'tide_fuentes_title'         => 'Sources & methodology',
+    'tide_three_sources_title'   => 'Three sources, three roles',
+    'tide_observed_section'      => 'Observed hourly heights (SHN)',
     'last_updated'           => 'Last updated:',
     'update_link'            => 'refresh',
     'tide_error_title'       => 'Tide information could not be retrieved at this time.',
@@ -210,6 +276,7 @@ return [
     'view_full_schedule'       => 'View full schedule',
     'change_dock'              => 'change',
     'upcoming_tides_heading'   => 'Upcoming tides',
+    'tide_mini_see_all'        => 'See full tide chart',
     'hourly_forecast_heading'  => 'Hourly forecast',
     'wind_navigable'           => 'Navigable',
     'wind_caution'             => 'Caution',

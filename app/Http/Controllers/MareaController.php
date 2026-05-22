@@ -2,17 +2,397 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\InaService;
 use App\Services\TideService;
+use Carbon\Carbon;
 use Illuminate\View\View;
 
 class MareaController extends Controller
 {
-    public function __construct(private TideService $tideService) {}
+    const TZ = 'America/Argentina/Buenos_Aires';
+
+    public function __construct(
+        private TideService $tideService,
+        private InaService  $inaService,
+    ) {}
 
     public function index(): View
     {
-        $tide = $this->tideService->getData();
+        $tide   = $this->tideService->getData();
+        $inaRaw = $this->inaService->getCachedTideData();
 
-        return view('marea.index', compact('tide'));
+        // Canonical "now" — prefer INA's server-stamped time, fall back to real now
+        $nowIso = $inaRaw['now'] ?? Carbon::now(self::TZ)->format('c');
+
+        // ── SHN series ────────────────────────────────────────────────────────
+        $shnObserved = $this->tideService->buildObservedSeries($tide['hourly'] ?? []);
+        $shnForecast = $this->tideService->buildForecastSeries($tide['forecast'] ?? []);
+
+        // ── INA forecast series (future points only, for chart + extremes) ───
+        $inaForecast = [];
+        if ($inaRaw && ! empty($inaRaw['data'])) {
+            $inaForecast = array_values(array_filter(
+                $inaRaw['data'],
+                fn ($p) => $p['type'] === 'forecast' && strcmp($p['time'], $nowIso) >= 0
+            ));
+        }
+
+        // ── Derived data ──────────────────────────────────────────────────────
+        $inaExtremes = $this->detectExtremes($inaForecast);
+        $events      = $this->buildEvents($shnForecast, $inaExtremes, $nowIso);
+        $alarms      = $this->generateAlarms($inaForecast, $nowIso);
+        $comparison  = $this->buildComparison($shnForecast, $inaExtremes, $nowIso);
+        $seWind      = $this->getSeWindForecast($tide['weather'] ?? []);
+        $summary     = $this->buildSummary($tide, $comparison, $inaExtremes, $nowIso);
+        $windHourly  = $this->buildWindSeries($tide['weather'] ?? []);
+
+        // ── Chart data bundle (embedded as JSON in the page) ─────────────────
+        $chartData = [
+            'now'          => $nowIso,
+            'shn_observed' => $shnObserved,
+            'shn_forecast' => $shnForecast,
+            'ina_forecast' => $inaForecast,
+            'wind_hourly'  => $windHourly,
+            'thresholds'   => ['alert' => 3.0, 'evacuation' => 3.5],
+        ];
+
+        return view('marea.index', [
+            'tide'       => $tide,
+            'chartData'  => $chartData,
+            'events'     => $events,
+            'alarms'     => $alarms,
+            'comparison' => $comparison,
+            'seWind'     => $seWind,
+            'summary'    => $summary,
+        ]);
+    }
+
+    // ── Local extremes detection ───────────────────────────────────────────────
+
+    private function detectExtremes(array $series): array
+    {
+        $extremes = [];
+        $n = count($series);
+        for ($i = 1; $i < $n - 1; $i++) {
+            $prev = $series[$i - 1]['value'];
+            $curr = $series[$i]['value'];
+            $next = $series[$i + 1]['value'];
+            if ($curr > $prev && $curr > $next) {
+                $extremes[] = array_merge($series[$i], ['kind' => 'max']);
+            } elseif ($curr < $prev && $curr < $next) {
+                $extremes[] = array_merge($series[$i], ['kind' => 'min']);
+            }
+        }
+        return $extremes;
+    }
+
+    // ── Events grid ───────────────────────────────────────────────────────────
+
+    private function buildEvents(array $shnForecast, array $inaExtremes, string $nowIso): array
+    {
+        $tz          = self::TZ;
+        $matchWindow = config('tide.event_match_window_minutes', 30);
+        $nowCarbon   = Carbon::now($tz);
+
+        $events          = [];
+        $usedInaIndices  = [];
+
+        // Start from SHN future extremes
+        foreach ($shnForecast as $shn) {
+            if (strcmp($shn['time'], $nowIso) <= 0) {
+                continue;
+            }
+            $shnTs  = Carbon::parse($shn['time'], $tz);
+            $paired = null;
+            $pairedIdx = null;
+
+            foreach ($inaExtremes as $i => $ina) {
+                if ($ina['kind'] !== $shn['kind'] || isset($usedInaIndices[$i])) {
+                    continue;
+                }
+                if (abs(Carbon::parse($ina['time'], $tz)->diffInMinutes($shnTs)) <= $matchWindow) {
+                    $paired    = $ina;
+                    $pairedIdx = $i;
+                    break;
+                }
+            }
+
+            if ($pairedIdx !== null) {
+                $usedInaIndices[$pairedIdx] = true;
+            }
+
+            $events[] = [
+                'kind'      => $shn['kind'],
+                'time'      => $shn['time'],
+                'value'     => $shn['value'],
+                'ina_value' => $paired ? $paired['value'] : null,
+                'source'    => $paired ? 'both' : 'shn',
+                'status'    => $shn['status'],
+                'day_label' => $shn['day_label'],
+                'relative'  => $this->relativeTime($shnTs, $nowCarbon),
+            ];
+        }
+
+        // Add INA-only extremes (no SHN pair)
+        foreach ($inaExtremes as $i => $ina) {
+            if (isset($usedInaIndices[$i])) {
+                continue;
+            }
+            $inaTs = Carbon::parse($ina['time'], $tz);
+            if ($inaTs->lte($nowCarbon)) {
+                continue;
+            }
+            $events[] = [
+                'kind'      => $ina['kind'],
+                'time'      => $ina['time'],
+                'value'     => $ina['value'],
+                'ina_value' => null,
+                'source'    => 'ina',
+                'status'    => $this->tideService->classifyLevel($ina['value']),
+                'day_label' => $this->dayLabelFromIso($ina['time']),
+                'relative'  => $this->relativeTime($inaTs, $nowCarbon),
+            ];
+        }
+
+        usort($events, fn ($a, $b) => strcmp($a['time'], $b['time']));
+
+        return array_slice($events, 0, 6);
+    }
+
+    // ── Alarms ────────────────────────────────────────────────────────────────
+
+    private function generateAlarms(array $inaForecast, string $nowIso): array
+    {
+        $raw = [];
+        foreach ($inaForecast as $p) {
+            $v = $p['value'];
+            if      ($v < 0.40) $type = 'extreme_low';
+            elseif  ($v < 0.70) $type = 'low';
+            elseif  ($v > 3.00) $type = 'alert';
+            elseif  ($v > 2.20) $type = 'very_high';
+            elseif  ($v > 2.00) $type = 'high';
+            else                 continue;
+            $raw[] = ['type' => $type, 'time' => $p['time'], 'value' => $v];
+        }
+
+        // One alarm per type per 12-hour window
+        $seen   = [];
+        $alarms = [];
+        $nowC   = Carbon::now(self::TZ);
+
+        foreach ($raw as $a) {
+            $window = (string) floor(strtotime($a['time']) / 43200);
+            $key    = $a['type'] . '_' . $window;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $alarms[]   = array_merge($a, [
+                'relative'  => $this->relativeTime(Carbon::parse($a['time'], self::TZ), $nowC),
+                'day_label' => $this->dayLabelFromIso($a['time']),
+            ]);
+        }
+
+        return $alarms;
+    }
+
+    // ── Comparison card ───────────────────────────────────────────────────────
+
+    private function buildComparison(array $shnForecast, array $inaExtremes, string $nowIso): ?array
+    {
+        $tz          = self::TZ;
+        $matchWindow = config('tide.event_match_window_minutes', 30);
+        $nowC        = Carbon::now($tz);
+
+        foreach ($shnForecast as $shn) {
+            if (strcmp($shn['time'], $nowIso) <= 0) {
+                continue;
+            }
+            $shnTs = Carbon::parse($shn['time'], $tz);
+
+            foreach ($inaExtremes as $ina) {
+                if ($ina['kind'] !== $shn['kind']) {
+                    continue;
+                }
+                if (abs(Carbon::parse($ina['time'], $tz)->diffInMinutes($shnTs)) > $matchWindow) {
+                    continue;
+                }
+
+                $diff  = abs($shn['value'] - $ina['value']);
+                $interp = match (true) {
+                    $diff < 0.10 => 'agree',
+                    $diff < 0.20 => 'minor_diff',
+                    default      => 'notable_diff',
+                };
+
+                return [
+                    'kind'      => $shn['kind'],
+                    'shn_time'  => $shn['time'],
+                    'shn_value' => $shn['value'],
+                    'ina_time'  => $ina['time'],
+                    'ina_value' => $ina['value'],
+                    'diff'      => round($diff, 3),
+                    'interp'    => $interp,
+                    'day_label' => $shn['day_label'],
+                    'relative'  => $this->relativeTime($shnTs, $nowC),
+                    'status'    => $shn['status'],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    // ── SE Wind ───────────────────────────────────────────────────────────────
+
+    private function getSeWindForecast(array $weather): array
+    {
+        if (! ($weather['available'] ?? false)) {
+            return ['has_se' => false, 'sustained' => false, 'slots' => []];
+        }
+
+        $minDeg    = config('tide.se_wind_min_degrees', 100);
+        $maxDeg    = config('tide.se_wind_max_degrees', 170);
+        $threshold = config('tide.se_wind_threshold_kmh', 15);
+        $minSlots  = config('tide.se_wind_sustained_slots', 3);
+
+        $slots = [];
+        foreach ($weather['hourly'] ?? [] as $dayGroup) {
+            foreach ($dayGroup['hours'] ?? [] as $h) {
+                $dir  = $h['wind_dir'] ?? 0;
+                $spd  = $h['wind_speed'] ?? 0;
+                $isSE = $dir >= $minDeg && $dir <= $maxDeg;
+                $slots[] = [
+                    'hour'        => $h['hour'],
+                    'speed'       => $spd,
+                    'dir_deg'     => $dir,
+                    'is_se'       => $isSE,
+                    'highlighted' => $isSE && $spd >= $threshold,
+                ];
+            }
+        }
+
+        // Detect sustained SE wind
+        $consecutive = 0;
+        $sustained   = false;
+        foreach ($slots as $s) {
+            if ($s['highlighted']) {
+                $consecutive++;
+                if ($consecutive >= $minSlots) {
+                    $sustained = true;
+                    break;
+                }
+            } else {
+                $consecutive = 0;
+            }
+        }
+
+        $hasSE = collect($slots)->where('highlighted', true)->count() > 0;
+
+        return ['has_se' => $hasSE, 'sustained' => $sustained, 'slots' => $slots];
+    }
+
+    // ── Wind series for chart ─────────────────────────────────────────────────
+
+    private function buildWindSeries(array $weather): array
+    {
+        if (! ($weather['available'] ?? false)) {
+            return [];
+        }
+
+        $minDeg = config('tide.se_wind_min_degrees', 100);
+        $maxDeg = config('tide.se_wind_max_degrees', 170);
+        $tz     = self::TZ;
+        $result = [];
+
+        foreach ($weather['hourly'] ?? [] as $dayGroup) {
+            $date = $dayGroup['date'] ?? null;
+            if (! $date) {
+                continue;
+            }
+            foreach ($dayGroup['hours'] ?? [] as $h) {
+                $dir    = (int) ($h['wind_dir'] ?? 0);
+                $spd    = (int) ($h['wind_speed'] ?? 0);
+                $isSE   = $dir >= $minDeg && $dir <= $maxDeg;
+                $isoStr = $date . 'T' . $h['hour'] . ':00';
+
+                try {
+                    $ts = Carbon::parse($isoStr, $tz)->format('c');
+                } catch (\Throwable) {
+                    continue;
+                }
+
+                $result[] = [
+                    'time'    => $ts,
+                    'speed'   => $spd,
+                    'dir_deg' => $dir,
+                    'is_se'   => $isSE,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    // ── Operational summary ───────────────────────────────────────────────────
+
+    private function buildSummary(array $tide, ?array $comparison, array $inaExtremes, string $nowIso): array
+    {
+        $nowC = Carbon::now(self::TZ);
+
+        // Next INA extreme in the future
+        $nextIna = null;
+        foreach ($inaExtremes as $e) {
+            if (strcmp($e['time'], $nowIso) > 0) {
+                $nextIna = $e;
+                break;
+            }
+        }
+
+        return [
+            'trend'      => $tide['trend'] ?? 'stable',
+            'comparison' => $comparison,
+            'next_ina'   => $nextIna ? [
+                'kind'     => $nextIna['kind'],
+                'value'    => $nextIna['value'],
+                'time_str' => Carbon::parse($nextIna['time'], self::TZ)->format('H:i'),
+                'day'      => $this->dayLabelFromIso($nextIna['time']),
+                'relative' => $this->relativeTime(Carbon::parse($nextIna['time'], self::TZ), $nowC),
+            ] : null,
+        ];
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function relativeTime(Carbon $target, Carbon $now): string
+    {
+        $mins = (int) $now->diffInMinutes($target, false);
+        if ($mins <= 0) {
+            return '';
+        }
+        if ($mins < 60) {
+            return "en {$mins}m";
+        }
+        $h = intdiv($mins, 60);
+        $m = $mins % 60;
+        return $m > 0 ? "en {$h}h {$m}m" : "en {$h}h";
+    }
+
+    private function dayLabelFromIso(string $iso): string
+    {
+        static $days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        try {
+            $tz    = self::TZ;
+            $date  = Carbon::parse($iso, $tz)->startOfDay();
+            $today = Carbon::now($tz)->startOfDay();
+            $diff  = (int) $today->diffInDays($date, false);
+            return match ($diff) {
+                0       => 'Hoy',
+                1       => 'Mañana',
+                default => $days[$date->dayOfWeek],
+            };
+        } catch (\Throwable) {
+            return '';
+        }
     }
 }

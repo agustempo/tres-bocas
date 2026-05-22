@@ -26,6 +26,10 @@ Alpine.store('theme', {
         this._apply();
     },
 
+    toggle() {
+        this.set(this._dark ? 'light' : 'dark');
+    },
+
     _apply() {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         this._dark = this.current === 'dark' ||

@@ -22,10 +22,8 @@ use App\Http\Controllers\MuellesComunidadController;
 use App\Http\Controllers\PatronesComunidadController;
 use Illuminate\Support\Facades\Route;
 
-// Root → dashboard (requires auth; guests redirected to login)
-Route::get('/', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('home');
+// Root → dashboard (public; lanchas section only shown when authenticated)
+Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 // /dashboard backward-compat redirect
 Route::redirect('/dashboard', '/')->name('dashboard');
