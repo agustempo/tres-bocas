@@ -7,6 +7,7 @@ use App\Models\Listing;
 use App\Models\Review;
 use App\Services\Movilidad\MobilidadService;
 use App\Services\TideService;
+use App\Services\TideSummaryService;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -14,6 +15,7 @@ class DashboardController extends Controller
     public function __construct(
         private TideService $tideService,
         private MobilidadService $movilidad,
+        private TideSummaryService $summaryService,
     ) {}
 
     public function index(): View
@@ -74,6 +76,8 @@ class DashboardController extends Controller
             }
         }
 
+        $llmDashboard = $this->summaryService->getCachedDashboard();
+
         return view('dashboard', compact(
             'totalListings',
             'publishedListings',
@@ -86,6 +90,7 @@ class DashboardController extends Controller
             'avistajeProximo',
             'confirmacionesProximo',
             'miReaccion',
+            'llmDashboard',
         ));
     }
 }

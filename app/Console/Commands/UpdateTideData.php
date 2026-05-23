@@ -54,6 +54,14 @@ class UpdateTideData extends Command
             $this->warn('LLM summary: unavailable (no API key or request failed — fallback to templates)');
         }
 
+        $dashboard = $summaryService->generateDashboard($data, $inaRaw);
+
+        if ($dashboard) {
+            $this->info('LLM dashboard: ' . $dashboard);
+        } else {
+            $this->warn('LLM dashboard: unavailable');
+        }
+
         return self::SUCCESS;
     }
 }

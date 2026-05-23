@@ -30,7 +30,8 @@
                 :tide="$tide"
                 :muelle="$muelle"
                 :proximo="$proximoPaso"
-                :servicio="$servicioPrincipal ?? null" />
+                :servicio="$servicioPrincipal ?? null"
+                :llm-summary="$llmDashboard ?? null" />
 
             @auth
             {{-- ── Grid desktop (usuarios logueados) ──────────────────────── --}}

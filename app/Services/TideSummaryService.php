@@ -9,18 +9,70 @@ use Illuminate\Support\Facades\Log;
 
 class TideSummaryService
 {
-    const CACHE_KEY = 'tide_llm_summary';
-    const CACHE_TTL = 35; // minutes — slightly longer than the tide data TTL
+    const CACHE_KEY           = 'tide_llm_summary';
+    const CACHE_KEY_DASHBOARD = 'tide_llm_dashboard';
+    const CACHE_TTL = 35; // minutes
     const TZ        = 'America/Argentina/Buenos_Aires';
 
     // ─── Public API ──────────────────────────────────────────────────────────
 
-    /**
-     * Return the cached LLM-generated summary, or null if not yet generated.
-     */
     public function getCached(): ?string
     {
         return Cache::get(self::CACHE_KEY);
+    }
+
+    public function getCachedDashboard(): ?string
+    {
+        return Cache::get(self::CACHE_KEY_DASHBOARD);
+    }
+
+    /**
+     * Short, friendly dashboard message — climate + tide vibe in 1-2 sentences.
+     */
+    public function generateDashboard(array $tideData, ?array $inaRaw): ?string
+    {
+        $apiKey = config('services.openai.api_key');
+        if (! $apiKey) {
+            return null;
+        }
+
+        $nowIso      = $inaRaw['now'] ?? Carbon::now(self::TZ)->format('c');
+        $inaForecast = $this->futureInaForecast($inaRaw, $nowIso);
+        $inaExtremes = $this->detectExtremes($inaForecast);
+        $shnForecast = app(TideService::class)->buildForecastSeries($tideData['forecast'] ?? []);
+
+        $prompt = $this->buildDashboardPrompt($tideData, $shnForecast, $inaExtremes, $nowIso);
+
+        try {
+            $response = Http::withToken($apiKey)
+                ->timeout(12)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model'       => 'gpt-4o-mini',
+                    'messages'    => [
+                        ['role' => 'system', 'content' => $this->dashboardSystemPrompt()],
+                        ['role' => 'user',   'content' => $prompt],
+                    ],
+                    'max_tokens'  => 80,
+                    'temperature' => 0.4,
+                ]);
+
+            if (! $response->successful()) {
+                Log::warning('TideSummaryService [dashboard]: OpenAI HTTP ' . $response->status());
+                return null;
+            }
+
+            $text = trim($response->json('choices.0.message.content') ?? '');
+            if (! $text) {
+                return null;
+            }
+
+            Cache::put(self::CACHE_KEY_DASHBOARD, $text, now()->addMinutes(self::CACHE_TTL));
+            return $text;
+
+        } catch (\Throwable $e) {
+            Log::warning('TideSummaryService [dashboard]: exception', ['msg' => $e->getMessage()]);
+            return null;
+        }
     }
 
     /**
@@ -56,7 +108,7 @@ class TideSummaryService
                         ['role' => 'system', 'content' => $this->systemPrompt()],
                         ['role' => 'user',   'content' => $prompt],
                     ],
-                    'max_tokens'  => 160,
+                    'max_tokens'  => 120,
                     'temperature' => 0.3,
                 ]);
 
@@ -82,6 +134,119 @@ class TideSummaryService
         }
     }
 
+    // ─── Dashboard prompt ─────────────────────────────────────────────────────
+
+    private function dashboardSystemPrompt(): string
+    {
+        return <<<PROMPT
+Sos el asistente del Delta del Paraná (San Fernando, Argentina).
+Escribí exactamente 1 oración corta — o 2 muy breves — para la pantalla de inicio de alguien que vive o trabaja en el delta.
+
+Tono: amigable, directo, "buena onda". Como si le mandaras un mensaje a un vecino isleño.
+
+Guías para razonar:
+- Los horarios de marea son PICOS del ciclo, no el momento en que empieza la condición. La tarde con marea alta significa que el agua está bien alrededor de ese pico — no solo en ese minuto exacto. La noche con marea baja significa que el agua empieza a bajar horas antes. Pensá en franjas del día, no en horarios puntuales.
+- Integrá clima y marea en una sola idea: temperatura, cielo, y si la marea acompaña o complica.
+- Si el nivel actual o algún evento de hoy es crítico (< 0.70 m o > 2.20 m), mencionalo sin alarmar.
+- Si el día está bien, decílo con onda. Si está complicado, sé honesto pero tranquilo.
+- Si hay un momento bueno o malo para navegar hoy, mencionalo en términos de franja horaria (la mañana, la tarde, la noche), no de horario exacto.
+
+Reglas de estilo:
+- Español rioplatense. Sin tecnicismos.
+- No saludes. Sin signos de exclamación. Arrancá directo con la idea.
+- Nunca uses "pleamar" ni "bajante": decí "marea alta" y "marea baja".
+- No advertís sobre calado durante una marea alta — eso solo aplica cuando el nivel es bajo (< 0.70 m).
+PROMPT;
+    }
+
+    private function buildDashboardPrompt(
+        array  $tideData,
+        array  $shnForecast,
+        array  $inaExtremes,
+        string $nowIso
+    ): string {
+        $tz      = self::TZ;
+        $now     = Carbon::parse($nowIso, $tz);
+        $current = $tideData['current'] ?? null;
+        $trend   = $tideData['trend']   ?? 'stable';
+        $weather = $tideData['weather'] ?? [];
+        $wind    = $tideData['wind']    ?? [];
+
+        $trendMap = ['rising' => 'subiendo', 'falling' => 'bajando', 'stable' => 'estable'];
+        $lines    = [];
+
+        // Current state (compact)
+        $stateParts = [];
+        if ($current) {
+            $nivel    = number_format((float) $current['level'], 2);
+            $tendency = $trendMap[$trend] ?? $trend;
+            $stateParts[] = "Marea: {$nivel} m ({$tendency})";
+        }
+        if ($weather['available'] ?? false) {
+            $temp      = $weather['temperature'] ?? null;
+            $feels     = $weather['feels_like'] ?? null;
+            $condition = strtolower($weather['condition'] ?? '');
+            if ($temp !== null) {
+                $tempStr      = "{$temp}°C" . ($feels !== null && abs($feels - $temp) >= 3 ? " (sensación {$feels}°C)" : '');
+                $stateParts[] = "Clima: {$tempStr}, {$condition}";
+            }
+        }
+        if (($wind['available'] ?? false) && ($wind['speed'] ?? 0) > 0) {
+            $stateParts[] = "Viento: {$wind['direction']}, {$wind['speed']} km/h";
+        }
+        if ($stateParts) {
+            $lines[] = implode(' | ', $stateParts);
+        }
+
+        // Today's SHN events — full cycle so the model can reason about the whole day
+        $todayEvents = array_values(array_filter(
+            $shnForecast,
+            fn ($e) => Carbon::parse($e['time'], $tz)->isSameDay($now)
+        ));
+        if ($todayEvents) {
+            $eventStrs = array_map(function ($e) use ($tz) {
+                $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
+                $hora  = Carbon::parse($e['time'], $tz)->format('H:i');
+                $nivel = number_format($e['value'], 2);
+                $alert = $e['value'] < 0.70 ? ' ⚠ calado crítico' : ($e['value'] > 2.20 ? ' ⚠ muelles' : '');
+                return "Marea {$tipo}: {$nivel} m a las {$hora}{$alert}";
+            }, $todayEvents);
+            $lines[] = 'Hoy: ' . implode(' / ', $eventStrs);
+        }
+
+        // Tomorrow INA range (brief)
+        $tomorrowDate = $now->copy()->addDay()->toDateString();
+        $inaToday     = array_filter(
+            $inaExtremes,
+            fn ($e) => Carbon::parse($e['time'], $tz)->toDateString() === $tomorrowDate
+        );
+        if ($inaToday) {
+            $vals   = array_column(array_values($inaToday), 'value');
+            $minVal = min($vals);
+            $maxVal = max($vals);
+            $alert  = $minVal < 0.70 ? ' — mínima crítica' : '';
+            $lines[] = 'Mañana INA: mín ' . number_format($minVal, 2) . ' m / máx ' . number_format($maxVal, 2) . " m{$alert}";
+        }
+
+        // Rain today if significant
+        if ($weather['available'] ?? false) {
+            foreach ($weather['hourly'] ?? [] as $dg) {
+                if ($dg['date'] !== $now->toDateString()) {
+                    continue;
+                }
+                $rainyHours = array_filter($dg['hours'], fn ($h) => ($h['rain'] ?? 0) >= 50);
+                if (! empty($rainyHours)) {
+                    $rainyHours = array_values($rainyHours);
+                    $maxProb    = max(array_column($rainyHours, 'rain'));
+                    $lines[]    = "Lluvia hoy: hasta {$maxProb}% de probabilidad";
+                }
+                break;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
     // ─── Prompt builders ─────────────────────────────────────────────────────
 
     private function systemPrompt(): string
@@ -93,6 +258,7 @@ Recibís un briefing con datos de marea y clima para las próximas 36 horas.
 Tu tarea: escribir 2 oraciones que le sirvan de verdad a alguien que va a navegar o trabajar en el delta. No repitas los números — interpretá el día y contá lo que importa.
 
 Para razonar bien:
+- Los horarios indicados son PICOS (máximo o mínimo del ciclo), no el momento en que la condición empieza. La marea ya está alta antes del pico y sigue alta después; ya está baja antes del mínimo y sigue baja después. Hablá de ventanas o momentos del día, no de horarios exactos como si fueran un interruptor.
 - Mirá el ciclo completo de hoy: si hay un momento bueno entre dos momentos críticos, eso define la ventana operativa.
 - Si el nivel mejora en la tarde pero vuelve a caer a niveles críticos a la noche, eso hay que decirlo.
 - Nivel < 0.70 m = calado crítico para lanchas. Nivel > 2.20 m = agua en muelles. Solo usá estas alertas cuando aplican.
@@ -104,6 +270,8 @@ Estilo:
 - Español rioplatense. Directo y neutro. Sin tecnicismos hidrológicos.
 - "marea alta" y "marea baja". Nunca "pleamar" ni "bajante".
 - No saludes. No te presentes. Arrancá directo con la información.
+- Frases cortas y directas. Sin subordinadas largas. Usá punto seguido en lugar de comas encadenadas.
+- Ejemplo del tono y estilo correcto: "Calado crítico esta mañana; mejora a la tarde. A la noche vuelve a bajar — cuidado si salís tarde."
 - Si SHN e INA difieren bastante, podés usar "podría". No menciones bandas de incertidumbre.
 PROMPT;
     }

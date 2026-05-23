@@ -306,8 +306,8 @@ return [
     'countdown_in_min'         => 'en :min min',
     'countdown_in_h'           => 'en :h h',
     'countdown_passed'         => 'Pasó',
-    'synth_upcoming_pleamar'   => 'pleamar :level m :day',
-    'synth_upcoming_bajamar'   => 'bajante :level m :day',
+    'synth_upcoming_pleamar'   => 'pleamar :level m — :time :day',
+    'synth_upcoming_bajamar'   => 'bajante :level m — :time :day',
     'synth_rain_warning'       => 'lluvia probable :pct% (:hour :day)',
     'synth_wind_warning'       => 'viento :speed km/h del :dir (:hour :day)',
 

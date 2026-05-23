@@ -26,7 +26,7 @@
          22 llovizna fina
          ∞  todo OK (default)
 --}}
-@props(['tide', 'muelle', 'proximo', 'servicio' => null])
+@props(['tide', 'muelle', 'proximo', 'servicio' => null, 'llmSummary' => null])
 
 @php
     use Carbon\Carbon;
@@ -192,9 +192,9 @@
     <span class="mt-1.5 shrink-0 w-2 h-2 rounded-full {{ $dotCls }}"></span>
     <div class="space-y-1.5 min-w-0 flex-1">
 
-        {{-- Main scenario message --}}
+        {{-- Main scenario message: LLM when available, template as fallback --}}
         <p class="text-sm font-medium {{ $textCls }} leading-relaxed">
-            {{ __('ui.synth_' . $scenarioKey) }}
+            {{ $llmSummary ?? __('ui.synth_' . $scenarioKey) }}
         </p>
 
         {{-- Suspension motive (admin-set) --}}
@@ -213,7 +213,7 @@
                 if (in_array($fc, ['red','orange','yellow'])) {
                     $isPlea   = str_contains(mb_strtolower($fe['type']), 'plea');
                     $wKey     = $isPlea ? 'synth_upcoming_pleamar' : 'synth_upcoming_bajamar';
-                    $tideWarn = __('ui.' . $wKey, ['level' => $fe['level'], 'day' => mb_strtolower($fe['day_label'] ?? '')]);
+                    $tideWarn = __('ui.' . $wKey, ['level' => $fe['level'], 'day' => mb_strtolower($fe['day_label'] ?? ''), 'time' => $fe['time'] ?? '']);
                     $tideWarnCls = match($fc) {
                         'red'    => 'text-red-600 dark:text-red-400',
                         'orange' => 'text-orange-500 dark:text-orange-400',
