@@ -11,7 +11,7 @@ class TideSummaryService
 {
     const CACHE_KEY           = 'tide_llm_summary';
     const CACHE_KEY_DASHBOARD = 'tide_llm_dashboard';
-    const CACHE_TTL = 35; // minutes
+    const CACHE_TTL = 65; // minutes — must exceed the hourly schedule interval
     const TZ        = 'America/Argentina/Buenos_Aires';
 
     // ─── Public API ──────────────────────────────────────────────────────────
