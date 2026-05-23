@@ -41,4 +41,8 @@ return [
         'forecast_cal_id'    => env('INA_FORECAST_CAL_ID', 432),
     ],
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+    ],
+
 ];

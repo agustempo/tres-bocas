@@ -9,8 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 class TideService
 {
-    const CACHE_KEY  = 'tide_san_fernando';
-    const CACHE_TTL  = 60; // minutes
+    const CACHE_KEY      = 'tide_san_fernando';
+    const CACHE_TTL      = 60; // minutes
+
+    /** Keep recently-passed SHN forecast events visible for this many minutes */
+    const LINGER_KEY     = 'tide_shn_forecast_linger';
+    const LINGER_MINUTES = 50;
 
     const URL_FORECAST   = 'https://www.hidro.gov.ar/oceanografia/pronostico.asp';
     const URL_HOURLY     = 'https://www.hidro.gov.ar/oceanografia/alturashorarias.asp';
@@ -40,6 +44,9 @@ class TideService
      */
     public function refresh(): array
     {
+        // Before overwriting the cache, rescue any events that just passed
+        $this->preserveLingeringEvents();
+
         $forecast = $this->fetchForecast();
         $hourly   = $this->fetchHourly();
 
@@ -400,6 +407,73 @@ class TideService
         }
 
         return $this->classifyLevel((float) $current['level']);
+    }
+
+    // ─── Linger cache (keeps recently-passed SHN forecast events for 50 min) ──
+
+    /**
+     * Before each refresh, scan the current cached forecast for events that
+     * have just passed and save them to the linger cache so they survive the
+     * cache overwrite.  Called at the start of refresh().
+     */
+    private function preserveLingeringEvents(): void
+    {
+        $cached = Cache::get(self::CACHE_KEY);
+        if (empty($cached['forecast'])) {
+            return;
+        }
+
+        $tz     = self::TZ;
+        $now    = Carbon::now($tz);
+        $linger = Cache::get(self::LINGER_KEY, []);
+
+        foreach ($cached['forecast'] as $entry) {
+            $ts = $this->parseEntryTimestamp($entry, $tz);
+            if (! $ts) {
+                continue;
+            }
+
+            // The event is in the past and within the linger window
+            if ($ts->lte($now) && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES))) {
+                $key = $entry['sort_key'] ?? $ts->format('YmdHi');
+                $linger[$key] = $entry;
+            }
+        }
+
+        // Evict entries that have aged past the linger window
+        $linger = array_filter($linger, function (array $entry) use ($now, $tz): bool {
+            $ts = $this->parseEntryTimestamp($entry, $tz);
+            return $ts && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES));
+        });
+
+        Cache::put(self::LINGER_KEY, $linger, now()->addMinutes(self::LINGER_MINUTES + 5));
+    }
+
+    /**
+     * Parse the date+time fields of a raw SHN forecast entry into a Carbon.
+     * Returns null when the entry is missing or malformed.
+     */
+    private function parseEntryTimestamp(array $entry, string $tz): ?Carbon
+    {
+        $date = $entry['date'] ?? '';
+        $time = $entry['time'] ?? '';
+        if (! preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $date, $dm)) {
+            return null;
+        }
+        if (! preg_match('/^(\d{1,2}):(\d{2})$/', $time, $tm)) {
+            return null;
+        }
+        return Carbon::create((int) $dm[3], (int) $dm[2], (int) $dm[1], (int) $tm[1], (int) $tm[2], 0, $tz);
+    }
+
+    /**
+     * Return raw SHN forecast entries that recently passed and are still
+     * within the linger window.  Used by MareaController to merge them back
+     * into the live forecast before building chart data and event lists.
+     */
+    public function getLingeringForecast(): array
+    {
+        return array_values(Cache::get(self::LINGER_KEY, []));
     }
 
     // ─── Chart series builders ────────────────────────────────────────────────

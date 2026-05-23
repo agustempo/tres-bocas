@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\InaService;
 use App\Services\TideService;
+use App\Services\TideSummaryService;
 use Carbon\Carbon;
 use Illuminate\View\View;
 
@@ -12,8 +13,9 @@ class MareaController extends Controller
     const TZ = 'America/Argentina/Buenos_Aires';
 
     public function __construct(
-        private TideService $tideService,
-        private InaService  $inaService,
+        private TideService        $tideService,
+        private InaService         $inaService,
+        private TideSummaryService $summaryService,
     ) {}
 
     public function index(): View
@@ -26,7 +28,25 @@ class MareaController extends Controller
 
         // ── SHN series ────────────────────────────────────────────────────────
         $shnObserved = $this->tideService->buildObservedSeries($tide['hourly'] ?? []);
-        $shnForecast = $this->tideService->buildForecastSeries($tide['forecast'] ?? []);
+
+        // Merge recently-passed SHN events (linger cache) so they remain
+        // visible in the chart and event list for up to 50 minutes after
+        // the API drops them.
+        $shnForecastRaw = $tide['forecast'] ?? [];
+        $lingeringRaw   = $this->tideService->getLingeringForecast();
+
+        if (! empty($lingeringRaw)) {
+            $existingKeys = array_flip(array_column($shnForecastRaw, 'sort_key'));
+            foreach ($lingeringRaw as $entry) {
+                $key = $entry['sort_key'] ?? '';
+                if ($key !== '' && ! isset($existingKeys[$key])) {
+                    $shnForecastRaw[] = $entry;
+                }
+            }
+            usort($shnForecastRaw, fn ($a, $b) => strcmp($a['sort_key'] ?? '', $b['sort_key'] ?? ''));
+        }
+
+        $shnForecast = $this->tideService->buildForecastSeries($shnForecastRaw);
 
         // ── INA forecast series (future points only, for chart + extremes) ───
         $inaForecast = [];
@@ -56,6 +76,9 @@ class MareaController extends Controller
             'thresholds'   => ['alert' => 3.0, 'evacuation' => 3.5],
         ];
 
+        // ── LLM-generated operational summary (pre-computed by the scheduled command) ──
+        $llmSummary = $this->summaryService->getCached();
+
         return view('marea.index', [
             'tide'       => $tide,
             'chartData'  => $chartData,
@@ -64,6 +87,7 @@ class MareaController extends Controller
             'comparison' => $comparison,
             'seWind'     => $seWind,
             'summary'    => $summary,
+            'llmSummary' => $llmSummary,
         ]);
     }
 
@@ -99,10 +123,11 @@ class MareaController extends Controller
 
         // Start from SHN future extremes
         foreach ($shnForecast as $shn) {
-            if (strcmp($shn['time'], $nowIso) <= 0) {
+            $shnTs = Carbon::parse($shn['time'], $tz);
+            // Skip events more than LINGER_MINUTES in the past
+            if ($shnTs->lt($nowCarbon->copy()->subMinutes(50))) {
                 continue;
             }
-            $shnTs  = Carbon::parse($shn['time'], $tz);
             $paired = null;
             $pairedIdx = null;
 
@@ -156,6 +181,27 @@ class MareaController extends Controller
 
         usort($events, fn ($a, $b) => strcmp($a['time'], $b['time']));
 
+        // Drop INA-only events that have an SHN event of the same kind within 90 min.
+        // Keeps the SHN version as the authoritative card when both sources cover the same tide cycle.
+        $shnTimes = [];
+        foreach ($events as $e) {
+            if ($e['source'] !== 'ina') {
+                $shnTimes[] = ['kind' => $e['kind'], 'ts' => Carbon::parse($e['time'], $tz)];
+            }
+        }
+        $events = array_values(array_filter($events, function ($e) use ($shnTimes, $tz) {
+            if ($e['source'] !== 'ina') {
+                return true;
+            }
+            $inaTs = Carbon::parse($e['time'], $tz);
+            foreach ($shnTimes as $shn) {
+                if ($shn['kind'] === $e['kind'] && abs($shn['ts']->diffInMinutes($inaTs)) <= 90) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+
         return array_slice($events, 0, 6);
     }
 
@@ -205,10 +251,10 @@ class MareaController extends Controller
         $nowC        = Carbon::now($tz);
 
         foreach ($shnForecast as $shn) {
-            if (strcmp($shn['time'], $nowIso) <= 0) {
+            $shnTs = Carbon::parse($shn['time'], $tz);
+            if ($shnTs->lt($nowC->copy()->subMinutes(50))) {
                 continue;
             }
-            $shnTs = Carbon::parse($shn['time'], $tz);
 
             foreach ($inaExtremes as $ina) {
                 if ($ina['kind'] !== $shn['kind']) {
@@ -366,8 +412,16 @@ class MareaController extends Controller
 
     private function relativeTime(Carbon $target, Carbon $now): string
     {
+        // positive = target is in the future, negative = target already passed
         $mins = (int) $now->diffInMinutes($target, false);
-        if ($mins <= 0) {
+
+        if ($mins < -50) {
+            return ''; // outside linger window, hide
+        }
+        if ($mins < 0) {
+            return 'hace ' . abs($mins) . 'm';
+        }
+        if ($mins === 0) {
             return '';
         }
         if ($mins < 60) {

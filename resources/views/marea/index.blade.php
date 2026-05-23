@@ -34,7 +34,19 @@
         {{-- Section label --}}
         <div class="flex items-center justify-between mb-3">
             <p class="text-xs font-bold uppercase tracking-widest text-gray-500">{{ __('ui.tide_status_heading') }}</p>
-            <span class="src-badge shn-obs">{{ __('ui.tide_src_shn_obs') }}</span>
+            <div class="flex items-center gap-2">
+                <button
+                    onclick="this.style.animation='spin 0.6s linear'; window.location.reload()"
+                    class="flex items-center justify-center h-7 w-7 rounded-full text-gray-500 hover:text-gray-300 hover:bg-white/10 active:scale-90 transition-all"
+                    title="Actualizar" aria-label="Actualizar datos"
+                >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                    </svg>
+                </button>
+                <span class="src-badge shn-obs">{{ __('ui.tide_src_shn_obs') }}</span>
+            </div>
         </div>
 
         <div class="flex items-start justify-between gap-4">
@@ -75,13 +87,15 @@
                     {{ __('ui.'.$status['label']) }}
                 </span>
                 @endif
-                @if($status['message'])
-                <p class="text-xs text-gray-400 leading-snug max-w-[180px]">{{ __('ui.'.$status['message']) }}</p>
-                @endif
             </div>
         </div>
 
-        {{-- Auto-generated operational summary --}}
+        {{-- Operational summary: LLM-generated if available, template strings as fallback --}}
+        @if($llmSummary)
+        <div class="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 leading-relaxed">
+            {{ $llmSummary }}
+        </div>
+        @else
         @php
             $s = $summary;
             $trendPhrase = __('ui.tide_summary_'.$s['trend']);
@@ -107,6 +121,7 @@
                     : e($phrase) !!}
             @endforeach
         </div>
+        @endif
         @endif
     </div>
 

@@ -198,13 +198,13 @@ return [
     'tide_summary_high_warn'  => 'Nivel alto — el muelle puede estar bajo el agua.',
 
     // Events grid
-    'tide_events_title'       => 'Próximos eventos · Todas las fuentes',
-    'tide_event_max'          => 'Máxima',
-    'tide_event_min'          => 'Mínima',
+    'tide_events_title'       => 'Mareas · Todas las fuentes',
+    'tide_event_max'          => 'Pleamar',
+    'tide_event_min'          => 'Bajamar',
     'tide_event_also_ina'     => 'INA: :value m',
 
     // Comparison card
-    'tide_comparison_title'        => 'Próxima :kind — Dos pronósticos',
+    'tide_comparison_title'        => ':kind próxima — Dos pronósticos',
     'tide_comparison_subtitle'     => 'Ambas fuentes coinciden en el horario, difieren en el nivel',
     'tide_comparison_agree'        => 'Coinciden — pronóstico confiable',
     'tide_comparison_minor_diff'   => 'Diferencia menor — dentro del margen normal',

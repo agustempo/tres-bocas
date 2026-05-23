@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Services\InaService;
 use App\Services\TideService;
+use App\Services\TideSummaryService;
 use Illuminate\Console\Command;
 
 class UpdateTideData extends Command
@@ -10,8 +12,11 @@ class UpdateTideData extends Command
     protected $signature   = 'update:tide-data';
     protected $description = 'Fetch fresh tide data from official sources and update the cache';
 
-    public function handle(TideService $tideService): int
-    {
+    public function handle(
+        TideService        $tideService,
+        InaService         $inaService,
+        TideSummaryService $summaryService,
+    ): int {
         $this->info('Fetching tide data for San Fernando...');
 
         $data = $tideService->refresh();
@@ -36,6 +41,18 @@ class UpdateTideData extends Command
 
         $this->info("Updated at:       {$data['updated_at']}");
         $this->info('Cache refreshed successfully.');
+
+        // ── Operational summary via LLM ───────────────────────────────────────
+        $this->info('Generating LLM tide summary...');
+
+        $inaRaw  = $inaService->getCachedTideData();
+        $summary = $summaryService->generate($data, $inaRaw);
+
+        if ($summary) {
+            $this->info('LLM summary: ' . $summary);
+        } else {
+            $this->warn('LLM summary: unavailable (no API key or request failed — fallback to templates)');
+        }
 
         return self::SUCCESS;
     }
