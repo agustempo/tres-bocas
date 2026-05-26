@@ -32,7 +32,7 @@ class WeatherService
     const LONGITUDE = -58.56;
     const TZ        = 'America/Argentina/Buenos_Aires';
 
-    /** WMO weather interpretation codes → Spanish label + emoji */
+    /** WMO weather interpretation codes → Spanish label + day emoji */
     private static array $WMO = [
         0  => ['label' => 'Despejado',             'emoji' => '☀️'],
         1  => ['label' => 'Mayormente despejado',  'emoji' => '🌤️'],
@@ -55,6 +55,17 @@ class WeatherService
         95 => ['label' => 'Tormenta',              'emoji' => '⛈️'],
         96 => ['label' => 'Tormenta con granizo',  'emoji' => '⛈️'],
         99 => ['label' => 'Tormenta con granizo',  'emoji' => '⛈️'],
+    ];
+
+    /**
+     * Night emoji overrides — clear/partly-cloudy codes get moon variants.
+     * Rain, fog, storm emojis are the same day or night.
+     */
+    private static array $WMO_NIGHT = [
+        0 => '🌙',
+        1 => '🌙',
+        2 => '🌙',  // partly cloudy night — moon still visible
+        3 => '☁️',  // fully overcast: same
     ];
 
     // ─── Public API ───────────────────────────────────────────────────────────
@@ -105,7 +116,7 @@ class WeatherService
             $response = Http::timeout(15)->retry(2, 500)->get(self::API_URL, [
                 'latitude'        => self::LATITUDE,
                 'longitude'       => self::LONGITUDE,
-                'current'         => 'temperature_2m,apparent_temperature,relative_humidity_2m,cloud_cover,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
+                'current'         => 'temperature_2m,apparent_temperature,relative_humidity_2m,cloud_cover,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day',
                 'hourly'          => 'temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m',
                 'wind_speed_unit' => 'kmh',
                 'timezone'        => self::TZ,
@@ -126,6 +137,7 @@ class WeatherService
             $wcode = (int) ($cur['weather_code']       ?? 0);
             $wspd  = $cur['wind_speed_10m']            ?? null;
             $wdir  = $cur['wind_direction_10m']        ?? null;
+            $isDay = (bool) ($cur['is_day']            ?? 1); // 1 = day, 0 = night
 
             if ($temp === null) {
                 Log::warning('WeatherService: unexpected response shape');
@@ -137,7 +149,7 @@ class WeatherService
             $cloudCover = $cur['cloud_cover']           ?? null;
             $gusts      = $cur['wind_gusts_10m']        ?? null;
 
-            $condition     = $this->decodeWmo($wcode);
+            $condition     = $this->decodeWmo($wcode, $isDay);
             $conditionType = $this->wmoToConditionType($wcode);
 
             // ── Hourly forecast grouped by day (3 days) ─────────────────────
@@ -153,8 +165,9 @@ class WeatherService
             $grouped = [];
 
             foreach ($times as $i => $timeStr) {
-                $dt   = Carbon::parse($timeStr, self::TZ);
-                $date = $dt->toDateString();
+                $dt     = Carbon::parse($timeStr, self::TZ);
+                $date   = $dt->toDateString();
+                $hIsDay = ($dt->hour >= 7 && $dt->hour < 20); // rough day window for hourly
 
                 if ($dt->lte($now)) {
                     continue;
@@ -163,7 +176,7 @@ class WeatherService
                     break;
                 }
 
-                $cond = $this->decodeWmo((int) ($hCodes[$i] ?? 0));
+                $cond = $this->decodeWmo((int) ($hCodes[$i] ?? 0), $hIsDay);
 
                 $grouped[$date][] = [
                     'hour'       => $dt->format('H:i'),
@@ -202,6 +215,7 @@ class WeatherService
                 'rain'           => (int) round($rain),
                 'condition'      => $condition['label'],
                 'emoji'          => $condition['emoji'],
+                'is_day'         => $isDay,
                 'condition_type' => $conditionType,
                 'hourly'         => $dayGroups,
                 'wind' => [
@@ -221,9 +235,13 @@ class WeatherService
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private function decodeWmo(int $code): array
+    private function decodeWmo(int $code, bool $isDay = true): array
     {
-        return self::$WMO[$code] ?? ['label' => 'Nublado', 'emoji' => '☁️'];
+        $base  = self::$WMO[$code] ?? ['label' => 'Nublado', 'emoji' => '☁️'];
+        if (! $isDay && isset(self::$WMO_NIGHT[$code])) {
+            return array_merge($base, ['emoji' => self::$WMO_NIGHT[$code]]);
+        }
+        return $base;
     }
 
     private function degreeToCardinal(int $deg): string

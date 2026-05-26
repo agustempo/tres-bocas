@@ -6,14 +6,35 @@
     $weatherOk = $weather['available'] ?? false;
     if (!$weatherOk) return;
 
-    $windSpeed = $weather['wind']['speed'] ?? 0;
-    $windOk    = $weather['wind']['available'] ?? false;
-    $rainPct   = $weather['rain'] ?? 0;
+    $windSpeed     = $weather['wind']['speed'] ?? 0;
+    $windOk        = $weather['wind']['available'] ?? false;
+    $rainPct       = $weather['rain'] ?? 0;
+    $temp          = $weather['temperature'] ?? null;
+    $feelsLike     = $weather['feels_like'] ?? $temp;
+    $condType      = $weather['condition_type'] ?? 'cloudy';
 
-    [$pillCls, $pillKey] = match(true) {
-        $windSpeed >= 50 => ['bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',       'wind_dangerous'],
-        $windSpeed >= 30 => ['bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300','wind_caution'],
-        default          => ['bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300','wind_navigable'],
+    // Sensación del día — prioridad: condición extrema > viento > temperatura
+    [$pillLabel, $pillCls] = match(true) {
+        $condType === 'storm'
+            => ['Tormentoso', 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'],
+        $windSpeed >= 40
+            => ['Muy ventoso', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'],
+        $condType === 'rain' && $rainPct >= 60
+            => ['Lluvioso', 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'],
+        $condType === 'fog'
+            => ['Brumoso', 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'],
+        $windSpeed >= 25
+            => ['Ventoso', 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'],
+        $feelsLike !== null && $feelsLike <= 8
+            => ['Frío', 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'],
+        $feelsLike !== null && $feelsLike <= 14
+            => ['Fresquito', 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300'],
+        $feelsLike !== null && $feelsLike <= 22
+            => ['Templado', 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'],
+        $feelsLike !== null && $feelsLike <= 28
+            => ['Calentito', 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'],
+        default
+            => ['Caluroso', 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'],
     };
 @endphp
 
@@ -22,13 +43,11 @@
     {{-- Label row --}}
     <div class="flex items-center justify-between">
         <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            ⛅ {{ __('ui.weather_summary') }}
+            {{ ($weather['is_day'] ?? true) ? '⛅' : '🌙' }} {{ __('ui.weather_summary') }}
         </span>
-        @if($windOk)
         <span class="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full {{ $pillCls }}">
-            {{ __('ui.' . $pillKey) }}
+            {{ $pillLabel }}
         </span>
-        @endif
     </div>
 
     {{-- Temp + emoji --}}

@@ -142,28 +142,20 @@ class TideSummaryService
 Sos el asistente del Delta del Paraná (San Fernando, Argentina).
 Escribí exactamente 1 oración corta — o 2 muy breves — para la pantalla de inicio de alguien que vive o trabaja en el delta.
 
-Tono: amigable, directo, "buena onda". Como si le mandaras un mensaje a un vecino isleño.
+Tono: amigable, directo, "buena onda". Como si le mandaras un mensaje a un vecino isleño. Cada tanto, si el día/noche está bien, transmitilo con optimismo natural — sin exagerar.
 
-Franjas horarias (usá estas referencias para nombrar momentos del día):
-- madrugada: 0–6 h
-- mañana: 6–11 h
-- mediodía: 11–14 h
-- tarde: 14–19 h
-- noche: 19–24 h
-Si el pico cae entre dos franjas, usá la más cercana o nombrá las dos: "al mediodía / primera tarde".
+Cada evento de marea viene etiquetado con su franja horaria y su estado (NORMAL, NIVEL BAJO, POCA AGUA — CALADO CRÍTICO, etc.). Usá exactamente esas etiquetas:
+- "madrugada" es el amanecer del día siguiente, NO es "la noche".
+- Solo mencioná eventos que NO sean NORMAL. Si todo es NORMAL, el mensaje es positivo y tranquilo.
+- Los eventos son PICOS — la condición dura horas alrededor. Hablá de momentos del día, no de horarios exactos.
+- La hora actual viene al principio del briefing. Si es noche o madrugada, no describas "el día" como si fuera de mañana — hablá de "esta noche", "mañana temprano", etc.
+- Integrá clima y marea en una sola idea si tiene sentido.
+- Cuando mencionés un evento importante (POCA AGUA, CALADO CRÍTICO, MAREA ALTA), podés incluir la hora y el nivel entre paréntesis o como aclaración breve. Ejemplos: "bajamar a las 12 (0.55 m)" o "plea a las 06 (1.10 m)".
 
-Guías para razonar:
-- Los horarios de marea son PICOS del ciclo, no el momento en que empieza la condición. La tarde con marea alta significa que el agua está bien alrededor de ese pico — no solo en ese minuto exacto. La noche con marea baja significa que el agua empieza a bajar horas antes. Pensá en franjas del día, no en horarios puntuales.
-- Integrá clima y marea en una sola idea: temperatura, cielo, y si la marea acompaña o complica.
-- Si el nivel actual o algún evento de hoy es crítico (< 0.60 m o > 2.20 m), mencionalo sin alarmar. Entre 0.60 y 0.70 m es nivel bajo pero no crítico — no lo llames crítico.
-- Si el día está bien, decílo con onda. Si está complicado, sé honesto pero tranquilo.
-- Si hay un momento bueno o malo para navegar hoy, mencionalo en términos de franja horaria (la mañana, la tarde, la noche), no de horario exacto.
+Terminología: usá "pleamar" (o "plea" si ya diste el contexto) para los picos altos, y "bajamar" (o "baja") para los picos bajos. Son términos de uso cotidiano en el delta, no tecnicismos.
 
-Reglas de estilo:
-- Español rioplatense. Sin tecnicismos.
-- No saludes. Sin signos de exclamación. Arrancá directo con la idea.
-- Usa pleamar o bajamar.
-- No advertís sobre calado durante una marea alta — eso solo aplica cuando el nivel es crítico (< 0.60 m).
+Estilo:
+- Español rioplatense. No saludes. Sin signos de exclamación. Arrancá directo.
 PROMPT;
     }
 
@@ -182,6 +174,17 @@ PROMPT;
 
         $trendMap = ['rising' => 'subiendo', 'falling' => 'bajando', 'stable' => 'estable'];
         $lines    = [];
+
+        // ── Contexto temporal (el modelo necesita saber si es de día o de noche) ──
+        $h      = (int) $now->format('G');
+        $franja = match (true) {
+            $h >= 0  && $h < 6  => 'madrugada',
+            $h >= 6  && $h < 11 => 'mañana',
+            $h >= 11 && $h < 14 => 'mediodía',
+            $h >= 14 && $h < 19 => 'tarde',
+            default             => 'noche',
+        };
+        $lines[] = 'Hora actual: ' . $now->format('H:i') . " ({$franja})";
 
         // Current state (compact)
         $stateParts = [];
@@ -212,28 +215,29 @@ PROMPT;
             fn ($e) => Carbon::parse($e['time'], $tz)->isSameDay($now)
         ));
         if ($todayEvents) {
-            $eventStrs = array_map(function ($e) use ($tz) {
+            $eventStrs = array_map(function ($e) use ($tz, $now) {
                 $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
-                $hora  = Carbon::parse($e['time'], $tz)->format('H:i');
                 $nivel = number_format($e['value'], 2);
-                $alert = $e['value'] < 0.60 ? ' ⚠ calado crítico' : ($e['value'] < 0.70 ? ' ⚠ nivel bajo' : ($e['value'] > 2.20 ? ' ⚠ muelles' : ''));
-                return "Marea {$tipo}: {$nivel} m a las {$hora}{$alert}";
+                $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, (float) $e['value']);
+                return "Marea {$tipo}: {$nivel} m — {$label}";
             }, $todayEvents);
             $lines[] = 'Hoy: ' . implode(' / ', $eventStrs);
         }
 
-        // Tomorrow INA range (brief)
+        // Tomorrow INA events — individual events with franja + status (not just min/max)
         $tomorrowDate = $now->copy()->addDay()->toDateString();
-        $inaToday     = array_filter(
+        $inaNextDay   = array_values(array_filter(
             $inaExtremes,
             fn ($e) => Carbon::parse($e['time'], $tz)->toDateString() === $tomorrowDate
-        );
-        if ($inaToday) {
-            $vals   = array_column(array_values($inaToday), 'value');
-            $minVal = min($vals);
-            $maxVal = max($vals);
-            $alert  = $minVal < 0.70 ? ' — mínima crítica' : '';
-            $lines[] = 'Mañana INA: mín ' . number_format($minVal, 2) . ' m / máx ' . number_format($maxVal, 2) . " m{$alert}";
+        ));
+        if ($inaNextDay) {
+            $inaStrs = array_map(function ($e) use ($tz, $now) {
+                $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
+                $nivel = number_format($e['value'], 2);
+                $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, (float) $e['value']);
+                return "Marea {$tipo}: {$nivel} m — {$label}";
+            }, $inaNextDay);
+            $lines[] = 'Mañana INA: ' . implode(' / ', $inaStrs);
         }
 
         // Rain today if significant
@@ -261,34 +265,26 @@ PROMPT;
     {
         return <<<PROMPT
 Sos el asistente operacional del Delta del Paraná (San Fernando, Argentina).
-Recibís un briefing con datos de marea y clima para las próximas 36 horas.
+Recibís un briefing de marea y clima. Cada evento ya viene con su franja horaria y su estado (NORMAL, NIVEL BAJO, POCA AGUA — CALADO CRÍTICO, ATENCIÓN, MAREA ALTA — MUELLES).
 
-Tu tarea: escribir 2 oraciones que le sirvan de verdad a alguien que va a navegar o trabajar en el delta. No repitas los números — interpretá el día y contá lo que importa.
+Tu tarea: escribir 2 oraciones útiles para alguien que va a navegar o trabajar en el delta.
 
-Franjas horarias (usá estas referencias para nombrar momentos del día):
-- madrugada: 0–6 h
-- mañana: 6–11 h
-- mediodía: 11–14 h
-- tarde: 14–19 h
-- noche: 19–24 h
-Si el pico cae entre dos franjas, usá la más cercana o nombrá las dos: "al mediodía / primera tarde".
+Reglas de contenido:
+- Mencioná SOLO eventos que NO sean NORMAL. Un evento NORMAL solo lo nombrás si sirve de contraste ("la tarde mejora antes de que vuelva a bajar").
+- Los horarios son PICOS del ciclo — la condición dura horas alrededor del pico. Hablá de franjas, no de minutos exactos.
+- Usá exactamente la franja que viene en cada evento: "madrugada" NO es "la noche", es el día siguiente.
+- Usá exactamente el estado que viene en cada evento: si dice NORMAL, no lo llames preocupante.
+- Para eventos importantes (POCA AGUA, CALADO CRÍTICO, MAREA ALTA), mencioná la hora y el nivel. Ejemplos: "bajamar al mediodía (0.55 m)" o "plea a la tarde (1.28 m)".
+- Lluvia y viento SE solo si coinciden con un momento crítico.
+- Si el panorama es bueno o sin alertas, transmitilo con optimismo natural — sin exagerar.
 
-Para razonar bien:
-- Los horarios indicados son PICOS (máximo o mínimo del ciclo), no el momento en que la condición empieza. La marea ya está alta antes del pico y sigue alta después; ya está baja antes del mínimo y sigue baja después. Hablá de ventanas o momentos del día, no de horarios exactos como si fueran un interruptor.
-- Mirá el ciclo completo de hoy: si hay un momento bueno entre dos momentos críticos, eso define la ventana operativa.
-- Si el nivel mejora en la tarde pero vuelve a caer a niveles críticos a la noche, eso hay que decirlo.
-- Nivel < 0.60 m = calado crítico para lanchas. Entre 0.60 y 0.70 m = nivel bajo, no crítico — no usés la palabra "crítico" para esos niveles. Nivel > 2.20 m = agua en muelles. Solo usá estas alertas cuando aplican.
-- Si mañana tiene un patrón similar o peor, mencionálo brevemente.
-- Lluvia (si la hay con alta prob.) y niebla son relevantes solo si coinciden con un momento crítico de marea o dificultan la navegación.
-- Viento SE con efecto de represa: solo si aparece en los datos.
+Terminología: usá "pleamar" (o "plea" como abreviación coloquial) para los picos altos, y "bajamar" (o "baja") para los picos bajos.
 
 Estilo:
-- Español rioplatense. Directo y neutro. Sin tecnicismos hidrológicos.
-- "marea alta" y "marea baja". Nunca "pleamar" ni "bajante".
-- No saludes. No te presentes. Arrancá directo con la información.
-- Frases cortas y directas. Sin subordinadas largas. Usá punto seguido en lugar de comas encadenadas.
-- Ejemplo del tono y estilo correcto: "Calado crítico esta mañana; mejora a la tarde. A la noche vuelve a bajar — cuidado si salís tarde."
-- Si SHN e INA difieren bastante, podés usar "podría". No menciones bandas de incertidumbre.
+- Español rioplatense. Directo.
+- No saludes. Arrancá directo con la información.
+- Frases cortas. Punto seguido en vez de comas encadenadas.
+- Si SHN e INA difieren, podés usar "podría". No menciones bandas de incertidumbre.
 PROMPT;
     }
 
@@ -342,11 +338,10 @@ PROMPT;
         if ($futureShn) {
             $shnLines = ['SHN (oficial):'];
             foreach ($futureShn as $e) {
-                $tipo      = $e['kind'] === 'max' ? 'alta' : 'baja';
-                $eCarbon   = Carbon::parse($e['time'], $tz);
-                $hora      = $eCarbon->format('H:i');
-                $dia       = $eCarbon->isSameDay($now) ? 'hoy' : 'mañana';
-                $shnLines[] = "  Marea {$tipo}: {$e['value']} m — {$hora} ({$dia})";
+                $tipo    = $e['kind'] === 'max' ? 'alta' : 'baja';
+                $eCarbon = Carbon::parse($e['time'], $tz);
+                $label   = $this->eventLabel($eCarbon, $now, (float) $e['value']);
+                $shnLines[] = "  Marea {$tipo}: {$e['value']} m — {$label}";
             }
             $tideParts[] = implode("\n", $shnLines);
         }
@@ -359,14 +354,10 @@ PROMPT;
         if ($futureIna) {
             $inaLines = ['INA (modelo hidrológico):'];
             foreach ($futureIna as $e) {
-                $tipo      = $e['kind'] === 'max' ? 'alta' : 'baja';
-                $eCarbon   = Carbon::parse($e['time'], $tz);
-                $hora      = $eCarbon->format('H:i');
-                $dia       = $eCarbon->isSameDay($now) ? 'hoy' : 'mañana';
-                $banda     = (isset($e['error_lo'], $e['error_hi']))
-                    ? " (banda: {$e['error_lo']}–{$e['error_hi']} m)"
-                    : '';
-                $inaLines[] = "  Marea {$tipo}: {$e['value']} m — {$hora} ({$dia}){$banda}";
+                $tipo    = $e['kind'] === 'max' ? 'alta' : 'baja';
+                $eCarbon = Carbon::parse($e['time'], $tz);
+                $label   = $this->eventLabel($eCarbon, $now, (float) $e['value']);
+                $inaLines[] = "  Marea {$tipo}: {$e['value']} m — {$label}";
             }
             $tideParts[] = implode("\n", $inaLines);
         }
@@ -559,5 +550,48 @@ PROMPT;
             }
         }
         return null;
+    }
+
+    // ─── Event label helper ───────────────────────────────────────────────────
+
+    /**
+     * Build a rich, unambiguous label for a single tide event.
+     * Example output: "Miércoles, mediodía — POCA AGUA"
+     *
+     * Embedding franja + status directly in the data means GPT doesn't have to
+     * infer either one from raw numbers — it just reads what's there.
+     */
+    private function eventLabel(Carbon $ts, Carbon $now, float $level): string
+    {
+        // ── Day name ──────────────────────────────────────────────────────────
+        $days   = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        $diff   = (int) $now->copy()->startOfDay()->diffInDays($ts->copy()->startOfDay(), false);
+        $dayStr = match ($diff) {
+            0       => 'hoy',
+            1       => 'mañana',
+            default => $days[$ts->dayOfWeek],
+        };
+
+        // ── Franja horaria ────────────────────────────────────────────────────
+        $h = (int) $ts->format('G'); // 0–23
+        $franja = match (true) {
+            $h >= 0  && $h < 6  => 'madrugada',
+            $h >= 6  && $h < 11 => 'mañana',
+            $h >= 11 && $h < 14 => 'mediodía',
+            $h >= 14 && $h < 19 => 'tarde',
+            default             => 'noche',
+        };
+
+        // ── Status label ──────────────────────────────────────────────────────
+        $status = match (true) {
+            $level >= 2.20 => 'MAREA ALTA — MUELLES',
+            $level >= 1.70 => 'ATENCIÓN',
+            $level >= 0.70 => 'NORMAL',
+            $level >= 0.60 => 'NIVEL BAJO',
+            $level >= 0.40 => 'POCA AGUA — CALADO CRÍTICO',
+            default        => 'MUY POCA AGUA — CALADO CRÍTICO',
+        };
+
+        return "{$dayStr}, {$franja} — {$status}";
     }
 }
