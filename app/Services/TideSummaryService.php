@@ -144,18 +144,26 @@ Escribí exactamente 1 oración corta — o 2 muy breves — para la pantalla de
 
 Tono: amigable, directo, "buena onda". Como si le mandaras un mensaje a un vecino isleño.
 
+Franjas horarias (usá estas referencias para nombrar momentos del día):
+- madrugada: 0–6 h
+- mañana: 6–11 h
+- mediodía: 11–14 h
+- tarde: 14–19 h
+- noche: 19–24 h
+Si el pico cae entre dos franjas, usá la más cercana o nombrá las dos: "al mediodía / primera tarde".
+
 Guías para razonar:
 - Los horarios de marea son PICOS del ciclo, no el momento en que empieza la condición. La tarde con marea alta significa que el agua está bien alrededor de ese pico — no solo en ese minuto exacto. La noche con marea baja significa que el agua empieza a bajar horas antes. Pensá en franjas del día, no en horarios puntuales.
 - Integrá clima y marea en una sola idea: temperatura, cielo, y si la marea acompaña o complica.
-- Si el nivel actual o algún evento de hoy es crítico (< 0.70 m o > 2.20 m), mencionalo sin alarmar.
+- Si el nivel actual o algún evento de hoy es crítico (< 0.60 m o > 2.20 m), mencionalo sin alarmar. Entre 0.60 y 0.70 m es nivel bajo pero no crítico — no lo llames crítico.
 - Si el día está bien, decílo con onda. Si está complicado, sé honesto pero tranquilo.
 - Si hay un momento bueno o malo para navegar hoy, mencionalo en términos de franja horaria (la mañana, la tarde, la noche), no de horario exacto.
 
 Reglas de estilo:
 - Español rioplatense. Sin tecnicismos.
 - No saludes. Sin signos de exclamación. Arrancá directo con la idea.
-- Nunca uses "pleamar" ni "bajante": decí "marea alta" y "marea baja".
-- No advertís sobre calado durante una marea alta — eso solo aplica cuando el nivel es bajo (< 0.70 m).
+- Usa pleamar o bajamar.
+- No advertís sobre calado durante una marea alta — eso solo aplica cuando el nivel es crítico (< 0.60 m).
 PROMPT;
     }
 
@@ -208,7 +216,7 @@ PROMPT;
                 $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
                 $hora  = Carbon::parse($e['time'], $tz)->format('H:i');
                 $nivel = number_format($e['value'], 2);
-                $alert = $e['value'] < 0.70 ? ' ⚠ calado crítico' : ($e['value'] > 2.20 ? ' ⚠ muelles' : '');
+                $alert = $e['value'] < 0.60 ? ' ⚠ calado crítico' : ($e['value'] < 0.70 ? ' ⚠ nivel bajo' : ($e['value'] > 2.20 ? ' ⚠ muelles' : ''));
                 return "Marea {$tipo}: {$nivel} m a las {$hora}{$alert}";
             }, $todayEvents);
             $lines[] = 'Hoy: ' . implode(' / ', $eventStrs);
@@ -257,11 +265,19 @@ Recibís un briefing con datos de marea y clima para las próximas 36 horas.
 
 Tu tarea: escribir 2 oraciones que le sirvan de verdad a alguien que va a navegar o trabajar en el delta. No repitas los números — interpretá el día y contá lo que importa.
 
+Franjas horarias (usá estas referencias para nombrar momentos del día):
+- madrugada: 0–6 h
+- mañana: 6–11 h
+- mediodía: 11–14 h
+- tarde: 14–19 h
+- noche: 19–24 h
+Si el pico cae entre dos franjas, usá la más cercana o nombrá las dos: "al mediodía / primera tarde".
+
 Para razonar bien:
 - Los horarios indicados son PICOS (máximo o mínimo del ciclo), no el momento en que la condición empieza. La marea ya está alta antes del pico y sigue alta después; ya está baja antes del mínimo y sigue baja después. Hablá de ventanas o momentos del día, no de horarios exactos como si fueran un interruptor.
 - Mirá el ciclo completo de hoy: si hay un momento bueno entre dos momentos críticos, eso define la ventana operativa.
 - Si el nivel mejora en la tarde pero vuelve a caer a niveles críticos a la noche, eso hay que decirlo.
-- Nivel < 0.70 m = calado crítico para lanchas. Nivel > 2.20 m = agua en muelles. Solo usá estas alertas cuando aplican.
+- Nivel < 0.60 m = calado crítico para lanchas. Entre 0.60 y 0.70 m = nivel bajo, no crítico — no usés la palabra "crítico" para esos niveles. Nivel > 2.20 m = agua en muelles. Solo usá estas alertas cuando aplican.
 - Si mañana tiene un patrón similar o peor, mencionálo brevemente.
 - Lluvia (si la hay con alta prob.) y niebla son relevantes solo si coinciden con un momento crítico de marea o dificultan la navegación.
 - Viento SE con efecto de represa: solo si aparece en los datos.
@@ -458,8 +474,10 @@ PROMPT;
                     $maxVal = max($vals);
 
                     $criticals = [];
-                    if ($minVal < 0.70) {
+                    if ($minVal < 0.60) {
                         $criticals[] = 'mínima ' . number_format($minVal, 2) . ' m → calado crítico';
+                    } elseif ($minVal < 0.70) {
+                        $criticals[] = 'mínima ' . number_format($minVal, 2) . ' m → nivel bajo';
                     }
                     if ($maxVal > 2.20) {
                         $criticals[] = 'máxima ' . number_format($maxVal, 2) . ' m → posible agua en muelles';

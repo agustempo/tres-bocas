@@ -418,35 +418,41 @@ class TideService
      */
     private function preserveLingeringEvents(): void
     {
-        $cached = Cache::get(self::CACHE_KEY);
-        if (empty($cached['forecast'])) {
-            return;
-        }
-
-        $tz     = self::TZ;
-        $now    = Carbon::now($tz);
-        $linger = Cache::get(self::LINGER_KEY, []);
-
-        foreach ($cached['forecast'] as $entry) {
-            $ts = $this->parseEntryTimestamp($entry, $tz);
-            if (! $ts) {
-                continue;
+        try {
+            $cached = Cache::get(self::CACHE_KEY);
+            if (empty($cached['forecast'])) {
+                return;
             }
 
-            // The event is in the past and within the linger window
-            if ($ts->lte($now) && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES))) {
-                $key = $entry['sort_key'] ?? $ts->format('YmdHi');
-                $linger[$key] = $entry;
+            $tz     = self::TZ;
+            $now    = Carbon::now($tz);
+            $linger = Cache::get(self::LINGER_KEY, []);
+
+            foreach ($cached['forecast'] as $entry) {
+                $ts = $this->parseEntryTimestamp($entry, $tz);
+                if (! $ts) {
+                    continue;
+                }
+
+                // The event is in the past and within the linger window
+                if ($ts->lte($now) && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES))) {
+                    $key = $entry['sort_key'] ?? $ts->format('YmdHi');
+                    $linger[$key] = $entry;
+                }
             }
+
+            // Evict entries that have aged past the linger window
+            $linger = array_filter($linger, function (array $entry) use ($now, $tz): bool {
+                $ts = $this->parseEntryTimestamp($entry, $tz);
+                return $ts && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES));
+            });
+
+            Cache::put(self::LINGER_KEY, $linger, now()->addMinutes(self::LINGER_MINUTES + 5));
+
+        } catch (\Throwable $e) {
+            Log::warning('TideService: preserveLingeringEvents failed', ['error' => $e->getMessage()]);
+            // Non-fatal — continue with refresh even if linger cache couldn't be updated
         }
-
-        // Evict entries that have aged past the linger window
-        $linger = array_filter($linger, function (array $entry) use ($now, $tz): bool {
-            $ts = $this->parseEntryTimestamp($entry, $tz);
-            return $ts && $ts->gte($now->copy()->subMinutes(self::LINGER_MINUTES));
-        });
-
-        Cache::put(self::LINGER_KEY, $linger, now()->addMinutes(self::LINGER_MINUTES + 5));
     }
 
     /**
