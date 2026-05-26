@@ -145,6 +145,10 @@ log "Caches rebuilt."
 php artisan cache:clear
 log "Application cache cleared."
 
+# Pre-populate tide cache immediately — avoids gap until the scheduler fires at :00
+log "Pre-fetching tide data post-deploy..."
+php artisan update:tide-data && log "Tide cache warm." || warn "update:tide-data failed — scheduler will retry at :00"
+
 
 # ─── Step 9 · Laravel scheduler cron ─────────────────────────────────────────
 CRON_JOB="* * * * * $WEB_USER php $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
