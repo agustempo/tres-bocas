@@ -16,6 +16,25 @@ class InaService
     const TIMEOUT   = 8;  // seconds
 
     /**
+     * Force-fetch fresh INA data and update the cache.
+     * Called by the scheduled command so INA refreshes in sync with SHN.
+     * On failure, returns the stale snapshot (if any) without touching the cache.
+     */
+    public function refresh(): ?array
+    {
+        $data = $this->fetchTideData();
+
+        if ($data !== null) {
+            Cache::put(self::CACHE_KEY, $data, now()->addMinutes(self::CACHE_TTL));
+            Cache::put(self::CACHE_KEY . '_stale', $data, now()->addHours(24));
+            return $data;
+        }
+
+        Log::warning('InaService: refresh failed, cache unchanged');
+        return Cache::get(self::CACHE_KEY . '_stale');
+    }
+
+    /**
      * Return cached tide data, fetching fresh on miss.
      * On API failure, falls back to the last known-good snapshot (up to 24 h old).
      * Returns null only when no data is available at all.

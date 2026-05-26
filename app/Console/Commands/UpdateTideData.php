@@ -42,10 +42,20 @@ class UpdateTideData extends Command
         $this->info("Updated at:       {$data['updated_at']}");
         $this->info('Cache refreshed successfully.');
 
+        // ── INA: force refresh in sync with SHN ──────────────────────────────
+        $this->info('Fetching INA forecast data...');
+
+        $inaRaw = $inaService->refresh();
+
+        if ($inaRaw) {
+            $inaCount = count(array_filter($inaRaw['data'] ?? [], fn ($p) => $p['type'] === 'forecast'));
+            $this->info("INA forecast points: {$inaCount}");
+        } else {
+            $this->warn('INA:              unavailable (stale cache or no data)');
+        }
+
         // ── Operational summary via LLM ───────────────────────────────────────
         $this->info('Generating LLM tide summary...');
-
-        $inaRaw  = $inaService->getCachedTideData();
         $summary = $summaryService->generate($data, $inaRaw);
 
         if ($summary) {

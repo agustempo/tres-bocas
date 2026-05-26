@@ -23,8 +23,7 @@ class MareaController extends Controller
         $tide   = $this->tideService->getData();
         $inaRaw = $this->inaService->getCachedTideData();
 
-        // Canonical "now" — prefer INA's server-stamped time, fall back to real now
-        $nowIso = $inaRaw['now'] ?? Carbon::now(self::TZ)->format('c');
+        $nowIso = Carbon::now(self::TZ)->format('c');
 
         // ── SHN series ────────────────────────────────────────────────────────
         $shnObserved = $this->tideService->buildObservedSeries($tide['hourly'] ?? []);
@@ -48,12 +47,15 @@ class MareaController extends Controller
 
         $shnForecast = $this->tideService->buildForecastSeries($shnForecastRaw);
 
-        // ── INA forecast series (future points only, for chart + extremes) ───
+        // ── INA forecast series ───────────────────────────────────────────────
+        // Include points from the last 50 min so recently-passed extremes survive
+        // in detectExtremes() — mirrors the SHN linger window.
         $inaForecast = [];
         if ($inaRaw && ! empty($inaRaw['data'])) {
-            $inaForecast = array_values(array_filter(
+            $lingerCutoff = Carbon::now(self::TZ)->subMinutes(50)->format('c');
+            $inaForecast  = array_values(array_filter(
                 $inaRaw['data'],
-                fn ($p) => $p['type'] === 'forecast' && strcmp($p['time'], $nowIso) >= 0
+                fn ($p) => $p['type'] === 'forecast' && strcmp($p['time'], $lingerCutoff) >= 0
             ));
         }
 
