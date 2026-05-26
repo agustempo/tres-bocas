@@ -28,7 +28,7 @@
     };
 @endphp
 
-<div class="rounded-2xl border border-gray-200/60 bg-gray-900 dark:bg-gray-900/80 shadow-sm overflow-hidden">
+<div class="rounded-2xl border border-gray-200/60 dark:border-gray-700/50 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
 
     <div class="px-6 pt-5 pb-4">
         {{-- Section label --}}
@@ -92,7 +92,7 @@
 
         {{-- Operational summary: LLM-generated if available, template strings as fallback --}}
         @if($llmSummary)
-        <div class="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 leading-relaxed">
+        <div class="mt-4 pt-4 border-t border-gray-200/60 dark:border-white/5 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
             {{ $llmSummary }}
         </div>
         @else
@@ -110,7 +110,7 @@
             if ($s['comparison']) $nextPhrases[] = __('ui.tide_summary_agree');
         @endphp
         @if(!empty($nextPhrases))
-        <div class="mt-4 pt-4 border-t border-white/5 text-sm text-gray-300 leading-relaxed">
+        <div class="mt-4 pt-4 border-t border-gray-200/60 dark:border-white/5 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
             {{ $trendPhrase }}
             @foreach($nextPhrases as $i => $phrase)
                 @if($i > 0 && $i === count($nextPhrases) - 1 && $s['comparison']) —
@@ -127,30 +127,30 @@
 
     {{-- Hourly heights table (collapsed by default) --}}
     @if(!empty($tide['hourly']))
-    <div x-data="{ openHourly: false }" class="border-t border-white/5">
+    <div x-data="{ openHourly: false }" class="border-t border-gray-200/60 dark:border-white/5">
         <button @click="openHourly = !openHourly"
-                class="w-full flex items-center justify-between px-6 py-3 text-left text-xs font-semibold text-gray-500 hover:bg-white/5 transition-colors select-none">
+                class="w-full flex items-center justify-between px-6 py-3 text-left text-xs font-semibold text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors select-none">
             <span>{{ __('ui.tide_observed_section') }}</span>
             <svg class="w-4 h-4 shrink-0 transition-transform duration-200" :class="openHourly ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
         </button>
         <div x-show="openHourly" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
-            <div class="overflow-x-auto border-t border-white/5">
+            <div class="overflow-x-auto border-t border-gray-200/40 dark:border-white/5">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="bg-white/5">
+                        <tr class="bg-gray-100/80 dark:bg-white/5">
                             <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">{{ __('ui.hour_col') }}</th>
                             <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide text-left">{{ __('ui.level_col') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/5">
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
                         @php $currentHour = $tide['current']['hour'] ?? null; @endphp
                         @foreach($tide['hourly'] as $row)
                         @php $isNow = ($row['hour'] === $currentHour); @endphp
-                        <tr class="{{ $isNow ? 'bg-emerald-900/20' : 'hover:bg-white/5' }} transition-colors">
+                        <tr class="{{ $isNow ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'hover:bg-gray-50 dark:hover:bg-white/5' }} transition-colors">
                             <td class="px-6 py-2.5 tabular-nums {{ $isNow ? 'font-bold text-emerald-400' : 'text-gray-400' }}">
                                 @if($isNow)<span class="inline-flex items-center gap-1.5"><span class="text-emerald-400">👉</span> {{ $row['hour'] }}</span>@else{{ $row['hour'] }}@endif
                             </td>
-                            <td class="px-6 py-2.5 font-semibold tabular-nums {{ $isNow ? 'text-emerald-400' : 'text-gray-200' }}">
+                            <td class="px-6 py-2.5 font-semibold tabular-nums {{ $isNow ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-200' }}">
                                 {{ $row['level'] }}
                                 @if($isNow)<span class="ml-2 text-xs font-normal text-gray-500">{{ __('ui.last_reading') }}</span>@endif
                             </td>
@@ -174,15 +174,15 @@
     $titleKey  = __('ui.tide_comparison_title', ['kind' => strtolower($kindLabel)]);
     $interpMsg = __('ui.tide_comparison_'.$cmp['interp']);
     $interpBg  = $cmp['interp'] === 'notable_diff'
-        ? 'bg-amber-900/30 text-amber-400 border-amber-800/40'
-        : 'bg-gray-800/60 text-gray-400 border-gray-700/40';
+        ? 'bg-amber-50 text-amber-600 border-amber-200/60 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/40'
+        : 'bg-gray-100 text-gray-500 border-gray-200/60 dark:bg-gray-800/60 dark:text-gray-400 dark:border-gray-700/40';
     $shnLevelColor = match($cmp['status']['color'] ?? 'gray') {
         'red','orange','yellow' => 'text-amber-400',
         default                  => 'text-blue-300',
     };
 @endphp
 
-<div class="rounded-2xl border border-gray-700/50 bg-gray-900 dark:bg-gray-900/80 overflow-hidden">
+<div class="rounded-2xl border border-gray-200/60 dark:border-gray-700/50 bg-white dark:bg-gray-900 overflow-hidden">
 
     <div class="px-5 pt-4 pb-1">
         <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">
@@ -194,7 +194,7 @@
     </div>
 
     {{-- Side-by-side cards --}}
-    <div class="grid grid-cols-2 gap-0 divide-x divide-gray-700/50 px-0">
+    <div class="grid grid-cols-2 gap-0 divide-x divide-gray-200/60 dark:divide-gray-700/50 px-0">
 
         {{-- SHN side --}}
         <div class="px-5 py-4 space-y-1">
@@ -203,7 +203,7 @@
             <p class="text-3xl font-black tabular-nums {{ $shnLevelColor }}">
                 {{ number_format($cmp['shn_value'], 2) }} <span class="text-base font-normal text-gray-500">m</span>
             </p>
-            <p class="text-sm text-gray-300 font-semibold">
+            <p class="text-sm text-gray-700 dark:text-gray-300 font-semibold">
                 {{ \Carbon\Carbon::parse($cmp['shn_time'], 'America/Argentina/Buenos_Aires')->format('H:i') }}
                 <span class="text-xs font-normal text-gray-500 ml-1">{{ strtolower($cmp['day_label']) }}</span>
             </p>
@@ -219,7 +219,7 @@
             <p class="text-3xl font-black tabular-nums text-purple-300">
                 {{ number_format($cmp['ina_value'], 2) }} <span class="text-base font-normal text-gray-500">m</span>
             </p>
-            <p class="text-sm text-gray-300 font-semibold">
+            <p class="text-sm text-gray-700 dark:text-gray-300 font-semibold">
                 {{ \Carbon\Carbon::parse($cmp['ina_time'], 'America/Argentina/Buenos_Aires')->format('H:i') }}
                 <span class="text-xs font-normal text-gray-500 ml-1">{{ strtolower($cmp['day_label']) }}</span>
             </p>
@@ -230,7 +230,7 @@
     </div>
 
     {{-- Difference bar --}}
-    <div class="px-5 py-3 border-t border-gray-700/50">
+    <div class="px-5 py-3 border-t border-gray-200/60 dark:border-gray-700/50">
         <div class="rounded-lg border {{ $interpBg }} px-3 py-2 text-xs">
             <span class="font-semibold">{{ __('ui.tide_comparison_diff_label', ['diff' => number_format($cmp['diff'], 2)]) }}</span>
             <span class="mx-1.5 text-gray-600">—</span>
