@@ -145,20 +145,20 @@ Escribí exactamente 1 oración corta — o 2 muy breves — para la pantalla de
 Tono: como si le mandaras un mensaje de texto a un vecino isleño. Directo, relajado, sin dramatismo. Si hay algo para avisar, avisás — pero sin convertirlo en alerta de gobierno.
 
 Cada evento de marea viene etiquetado con su franja horaria y su estado. Usá esas etiquetas:
-- Solo mencioná eventos que NO sean NORMAL. Si TODOS los eventos son NORMAL, podés decir algo positivo.
-- Si algún evento es NIVEL BAJO, POCA AGUA o peor, no digas "pinta bien" — hay algo para avisar aunque sea menor.
+- Si TODOS los eventos son NORMAL, decilo con onda positiva.
+- Si hay algún evento no-NORMAL, avisá — pero siempre cerrá el arco: ¿cuándo mejora o qué sigue? La persona necesita saber la ventana mala Y cuándo puede salir tranquilo.
 - "madrugada" es el día siguiente temprano, no "la noche".
 - La hora actual viene al principio. Si es noche, hablá de "mañana", no de "el día".
-- Para eventos importantes, podés incluir hora y nivel de forma coloquial: "bajamar al mediodía (0.55 m)".
+- Para eventos importantes, incluí hora y nivel: "bajamar al mediodía (0.5 m)".
 
 Terminología: "pleamar" / "plea" para picos altos. "Bajamar" / "baja" para picos bajos.
 
 Ejemplos del tono correcto:
-✓ "Mañana al mediodía baja bastante (0.55 m) — ojo si salís antes de la plea de la tarde."
-✓ "Buena noche, agua normal. Mañana también pinta bien."
-✓ "Esta noche tranquilo. Mañana al mediodía poca agua — mejor no salir en esa franja."
+✓ "Bajamar al mediodía (0.5 m) — poca agua hasta la tarde. Después la plea mejora y la tarde queda libre."
+✓ "Esta noche tranquilo. Mañana al mediodía poca agua — mejor salir a la mañana o esperar la plea de la tarde."
+✓ "Agua normal toda la noche y mañana también."
 ✗ "Se espera bajamar crítica. Asegurate de planificar tus actividades con precaución." ← demasiado formal
-✗ "El nivel de agua será crítico." ← habla de datos, no de la vida real
+✗ "Mañana al mediodía poca agua." ← avisa el problema pero no dice qué sigue
 
 Estilo: español rioplatense, sin exclamaciones, arrancá directo.
 PROMPT;
@@ -214,48 +214,51 @@ PROMPT;
             $lines[] = implode(' | ', $stateParts);
         }
 
-        // ── Próximos eventos: SHN + INA mezclados, ordenados cronológicamente ──
-        // No separamos hoy/mañana acá — el modelo los clasifica a partir de
-        // "Hora actual" que ya está en la primera línea. Así no hay gap si un
-        // evento es INA-only y ocurre hoy.
-        $horizon = $now->copy()->addHours(36);
+        // ── Próximos eventos: cronológicos, SHN preferido, INA llena los gaps ──
+        // SHN es la fuente oficial. INA se agrega solo cuando no hay evento SHN
+        // del mismo tipo (max/min) dentro de una ventana de 90 minutos.
+        // Esto evita duplicados y mantiene el gap de INA-only cubierto.
+        $horizon    = $now->copy()->addHours(36);
+        $matchWin   = 90; // minutos de tolerancia para considerar mismo evento
 
         $allEvents = [];
 
+        // Primero SHN
         foreach ($shnForecast as $e) {
             $ts = Carbon::parse($e['time'], $tz);
             if ($ts->lt($now) || $ts->gt($horizon)) continue;
-            $allEvents[] = [
-                'time'   => $e['time'],
-                'kind'   => $e['kind'],
-                'value'  => (float) $e['value'],
-                'source' => 'SHN',
-            ];
+            $allEvents[] = ['time' => $e['time'], 'kind' => $e['kind'],
+                            'value' => (float) $e['value'], 'source' => 'SHN'];
         }
 
+        // INA solo si no hay SHN del mismo tipo cerca
         foreach ($inaExtremes as $e) {
             $ts = Carbon::parse($e['time'], $tz);
             if ($ts->lt($now) || $ts->gt($horizon)) continue;
-            $allEvents[] = [
-                'time'   => $e['time'],
-                'kind'   => $e['kind'],
-                'value'  => (float) $e['value'],
-                'source' => 'INA',
-            ];
+
+            $hasShn = false;
+            foreach ($allEvents as $s) {
+                if ($s['source'] !== 'SHN' || $s['kind'] !== $e['kind']) continue;
+                if (abs(Carbon::parse($s['time'], $tz)->diffInMinutes($ts)) <= $matchWin) {
+                    $hasShn = true;
+                    break;
+                }
+            }
+            if (! $hasShn) {
+                $allEvents[] = ['time' => $e['time'], 'kind' => $e['kind'],
+                                'value' => (float) $e['value'], 'source' => 'INA'];
+            }
         }
 
         usort($allEvents, fn ($a, $b) => strcmp($a['time'], $b['time']));
 
         if ($allEvents) {
-            $eventStrs = array_map(function ($e) use ($tz, $now) {
+            $lines[] = 'Próximos eventos:';
+            foreach ($allEvents as $e) {
                 $tipo  = $e['kind'] === 'max' ? 'pleamar' : 'bajamar';
                 $nivel = number_format($e['value'], 2);
                 $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, $e['value']);
-                return "[{$e['source']}] {$tipo} {$nivel} m — {$label}";
-            }, $allEvents);
-            $lines[] = 'Próximos eventos:';
-            foreach ($eventStrs as $str) {
-                $lines[] = "  {$str}";
+                $lines[] = "  [{$e['source']}] {$tipo} {$nivel} m — {$label}";
             }
         }
 
@@ -289,11 +292,12 @@ Recibís un briefing de marea y clima. Cada evento ya viene con su franja horari
 Tu tarea: escribir 2 oraciones útiles para alguien que va a navegar o trabajar en el delta.
 
 Reglas de contenido:
-- Mencioná SOLO eventos que NO sean NORMAL. Un evento NORMAL solo lo nombrás si sirve de contraste ("la tarde mejora antes de que vuelva a bajar").
+- Siempre describí el arco completo: si hay un momento problemático, decí también cuándo mejora (o cuándo vuelve a empeorar). La persona necesita saber la ventana operativa, no solo el pico malo. Ejemplo: "Bajamar al mediodía (0.5 m) — poca agua hasta la tarde. La plea de la tarde mejora."
+- Mencioná eventos NORMAL solo cuando dan contexto útil (recuperación, ventana segura). No los describas como problemáticos.
 - Los horarios son PICOS del ciclo — la condición dura horas alrededor del pico. Hablá de franjas, no de minutos exactos.
 - Usá exactamente la franja que viene en cada evento: "madrugada" NO es "la noche", es el día siguiente.
-- Para eventos importantes (POCA AGUA, CALADO CRÍTICO, MAREA ALTA), mencioná la hora y el nivel de forma coloquial. Ejemplos: "bajamar al mediodía (0.55 m)" o "plea a la tarde (1.28 m)".
-- Si el evento viene solo de INA (modelo), aclaralo con "según el INA" o "el modelo indica". Si viene de SHN (oficial), podés decirlo directamente sin aclaración — es la fuente principal. Si ambas fuentes coinciden, podés mencionar que "tanto SHN como INA" o simplemente decirlo con confianza.
+- Para eventos importantes (POCA AGUA, NIVEL BAJO, MAREA ALTA), mencioná la hora y el nivel de forma coloquial. Ejemplos: "bajamar al mediodía (0.5 m)" o "plea a la tarde (1.3 m)".
+- Si el evento viene solo de INA (modelo), aclaralo con "según el INA" o "el modelo indica". Si viene de SHN (oficial), podés decirlo directamente — es la fuente principal.
 - Lluvia y viento SE solo si coinciden con un momento crítico.
 - Si TODOS los eventos son NORMAL, transmitilo con optimismo. Si alguno es NIVEL BAJO o peor, no uses "pinta bien" ni frases tranquilizadoras globales — siempre mencioná el evento relevante.
 
@@ -364,8 +368,9 @@ PROMPT;
             foreach ($futureShn as $e) {
                 $tipo    = $e['kind'] === 'max' ? 'alta' : 'baja';
                 $eCarbon = Carbon::parse($e['time'], $tz);
+                $nivel   = number_format((float) $e['value'], 1);
                 $label   = $this->eventLabel($eCarbon, $now, (float) $e['value']);
-                $shnLines[] = "  Marea {$tipo}: {$e['value']} m — {$label}";
+                $shnLines[] = "  Marea {$tipo}: {$nivel} m — {$label}";
             }
             $tideParts[] = implode("\n", $shnLines);
         }
@@ -376,12 +381,13 @@ PROMPT;
             fn ($e) => strcmp($e['time'], $nowIso) > 0 && Carbon::parse($e['time'], $tz)->lte($horizon)
         ));
         if ($futureIna) {
-            $inaLines = ['INA (modelo hidrológico):'];
+            $inaLines = ['INA (modelo hidrológico — mencioná "según el INA" al citar estos valores):'];
             foreach ($futureIna as $e) {
                 $tipo    = $e['kind'] === 'max' ? 'alta' : 'baja';
                 $eCarbon = Carbon::parse($e['time'], $tz);
+                $nivel   = number_format((float) $e['value'], 1);
                 $label   = $this->eventLabel($eCarbon, $now, (float) $e['value']);
-                $inaLines[] = "  Marea {$tipo}: {$e['value']} m — {$label}";
+                $inaLines[] = "  Marea {$tipo}: {$nivel} m — {$label}";
             }
             $tideParts[] = implode("\n", $inaLines);
         }
