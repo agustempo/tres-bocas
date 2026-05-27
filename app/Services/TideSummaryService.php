@@ -145,7 +145,8 @@ Escribí exactamente 1 oración corta — o 2 muy breves — para la pantalla de
 Tono: como si le mandaras un mensaje de texto a un vecino isleño. Directo, relajado, sin dramatismo. Si hay algo para avisar, avisás — pero sin convertirlo en alerta de gobierno.
 
 Cada evento de marea viene etiquetado con su franja horaria y su estado. Usá esas etiquetas:
-- Solo mencioná eventos que NO sean NORMAL. Si todo está bien, decílo tranquilo.
+- Solo mencioná eventos que NO sean NORMAL. Si TODOS los eventos son NORMAL, podés decir algo positivo.
+- Si algún evento es NIVEL BAJO, POCA AGUA o peor, no digas "pinta bien" — hay algo para avisar aunque sea menor.
 - "madrugada" es el día siguiente temprano, no "la noche".
 - La hora actual viene al principio. Si es noche, hablá de "mañana", no de "el día".
 - Para eventos importantes, podés incluir hora y nivel de forma coloquial: "bajamar al mediodía (0.55 m)".
@@ -213,35 +214,49 @@ PROMPT;
             $lines[] = implode(' | ', $stateParts);
         }
 
-        // Today's SHN events — full cycle so the model can reason about the whole day
-        $todayEvents = array_values(array_filter(
-            $shnForecast,
-            fn ($e) => Carbon::parse($e['time'], $tz)->isSameDay($now)
-        ));
-        if ($todayEvents) {
-            $eventStrs = array_map(function ($e) use ($tz, $now) {
-                $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
-                $nivel = number_format($e['value'], 2);
-                $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, (float) $e['value']);
-                return "Marea {$tipo}: {$nivel} m — {$label}";
-            }, $todayEvents);
-            $lines[] = 'Hoy: ' . implode(' / ', $eventStrs);
+        // ── Próximos eventos: SHN + INA mezclados, ordenados cronológicamente ──
+        // No separamos hoy/mañana acá — el modelo los clasifica a partir de
+        // "Hora actual" que ya está en la primera línea. Así no hay gap si un
+        // evento es INA-only y ocurre hoy.
+        $horizon = $now->copy()->addHours(36);
+
+        $allEvents = [];
+
+        foreach ($shnForecast as $e) {
+            $ts = Carbon::parse($e['time'], $tz);
+            if ($ts->lt($now) || $ts->gt($horizon)) continue;
+            $allEvents[] = [
+                'time'   => $e['time'],
+                'kind'   => $e['kind'],
+                'value'  => (float) $e['value'],
+                'source' => 'SHN',
+            ];
         }
 
-        // Tomorrow INA events — individual events with franja + status (not just min/max)
-        $tomorrowDate = $now->copy()->addDay()->toDateString();
-        $inaNextDay   = array_values(array_filter(
-            $inaExtremes,
-            fn ($e) => Carbon::parse($e['time'], $tz)->toDateString() === $tomorrowDate
-        ));
-        if ($inaNextDay) {
-            $inaStrs = array_map(function ($e) use ($tz, $now) {
-                $tipo  = $e['kind'] === 'max' ? 'alta' : 'baja';
+        foreach ($inaExtremes as $e) {
+            $ts = Carbon::parse($e['time'], $tz);
+            if ($ts->lt($now) || $ts->gt($horizon)) continue;
+            $allEvents[] = [
+                'time'   => $e['time'],
+                'kind'   => $e['kind'],
+                'value'  => (float) $e['value'],
+                'source' => 'INA',
+            ];
+        }
+
+        usort($allEvents, fn ($a, $b) => strcmp($a['time'], $b['time']));
+
+        if ($allEvents) {
+            $eventStrs = array_map(function ($e) use ($tz, $now) {
+                $tipo  = $e['kind'] === 'max' ? 'pleamar' : 'bajamar';
                 $nivel = number_format($e['value'], 2);
-                $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, (float) $e['value']);
-                return "Marea {$tipo}: {$nivel} m — {$label}";
-            }, $inaNextDay);
-            $lines[] = 'Mañana INA: ' . implode(' / ', $inaStrs);
+                $label = $this->eventLabel(Carbon::parse($e['time'], $tz), $now, $e['value']);
+                return "[{$e['source']}] {$tipo} {$nivel} m — {$label}";
+            }, $allEvents);
+            $lines[] = 'Próximos eventos:';
+            foreach ($eventStrs as $str) {
+                $lines[] = "  {$str}";
+            }
         }
 
         // Rain today if significant
@@ -280,7 +295,7 @@ Reglas de contenido:
 - Para eventos importantes (POCA AGUA, CALADO CRÍTICO, MAREA ALTA), mencioná la hora y el nivel de forma coloquial. Ejemplos: "bajamar al mediodía (0.55 m)" o "plea a la tarde (1.28 m)".
 - Si el evento viene solo de INA (modelo), aclaralo con "según el INA" o "el modelo indica". Si viene de SHN (oficial), podés decirlo directamente sin aclaración — es la fuente principal. Si ambas fuentes coinciden, podés mencionar que "tanto SHN como INA" o simplemente decirlo con confianza.
 - Lluvia y viento SE solo si coinciden con un momento crítico.
-- Si el panorama es bueno, transmitilo con optimismo — sin exagerar.
+- Si TODOS los eventos son NORMAL, transmitilo con optimismo. Si alguno es NIVEL BAJO o peor, no uses "pinta bien" ni frases tranquilizadoras globales — siempre mencioná el evento relevante.
 
 Terminología: "pleamar" / "plea" para picos altos. "Bajamar" / "baja" para picos bajos.
 
@@ -573,12 +588,15 @@ PROMPT;
     private function eventLabel(Carbon $ts, Carbon $now, float $level): string
     {
         // ── Day name ──────────────────────────────────────────────────────────
+        // Always include the actual weekday so the label stays unambiguous even
+        // when the LLM cache is served hours after generation (hoy→ayer, etc.).
         $days   = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
         $diff   = (int) $now->copy()->startOfDay()->diffInDays($ts->copy()->startOfDay(), false);
+        $dayName = $days[$ts->dayOfWeek];
         $dayStr = match ($diff) {
-            0       => 'hoy',
-            1       => 'mañana',
-            default => $days[$ts->dayOfWeek],
+            0       => "hoy ({$dayName})",
+            1       => "mañana ({$dayName})",
+            default => $dayName,
         };
 
         // ── Franja horaria ────────────────────────────────────────────────────
@@ -597,8 +615,8 @@ PROMPT;
             $level >= 1.70 => 'ATENCIÓN',
             $level >= 0.70 => 'NORMAL',
             $level >= 0.60 => 'NIVEL BAJO',
-            $level >= 0.40 => 'POCA AGUA — CALADO CRÍTICO',
-            default        => 'MUY POCA AGUA — CALADO CRÍTICO',
+            $level >= 0.40 => 'POCA AGUA',
+            default        => 'MUY POCA AGUA',
         };
 
         $hora = $ts->format('H:i');
