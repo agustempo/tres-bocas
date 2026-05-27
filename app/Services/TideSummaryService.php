@@ -150,6 +150,7 @@ Cada evento de marea viene etiquetado con su franja horaria y su estado. Usá es
 - "madrugada" es el día siguiente temprano, no "la noche".
 - La hora actual viene al principio. Si es noche, hablá de "mañana", no de "el día".
 - Para eventos importantes, incluí hora y nivel: "bajamar al mediodía (0.5 m)".
+- Si la "Tendencia observada" muestra niveles significativamente más bajos que el pronóstico, mencionalo brevemente: el dato real manda.
 
 Terminología: "pleamar" / "plea" para picos altos. "Bajamar" / "baja" para picos bajos.
 
@@ -212,6 +213,14 @@ PROMPT;
         }
         if ($stateParts) {
             $lines[] = implode(' | ', $stateParts);
+        }
+
+        // Tendencia observada — últimas lecturas horarias (para ver si el agua bajó más de lo previsto)
+        $hourly = $tideData['hourly'] ?? [];
+        if (count($hourly) >= 2) {
+            $recent  = array_slice($hourly, -3);
+            $obsStrs = array_map(fn ($h) => "{$h['hour']}: " . number_format((float) $h['level'], 2) . " m", $recent);
+            $lines[] = "Tendencia observada: " . implode(' → ', $obsStrs);
         }
 
         // ── Próximos eventos: cronológicos, SHN preferido, INA llena los gaps ──
@@ -291,28 +300,33 @@ Recibís un briefing de marea y clima. Cada evento ya viene con su franja horari
 
 Tu tarea: escribir 2 oraciones útiles para alguien que va a navegar o trabajar en el delta.
 
+Sobre las fuentes de datos:
+- SHN (oficial): pronóstico astronómico. Muy preciso en el HORARIO de los picos, pero puede errar en el NIVEL cuando hay viento sostenido, sudestada o crecida del Paraná.
+- INA (modelo): incluye caudal del Paraná, nivel del Río de la Plata y viento previsto. Más útil cuando hay condiciones meteorológicas que afectan el nivel real.
+- Nivel observado: el dato más confiable de todos — es lo que está pasando ahora mismo. Si difiere del pronóstico, priorizalo.
+
 Reglas de contenido:
-- Siempre describí el arco completo: si hay un momento problemático, decí también cuándo mejora (o cuándo vuelve a empeorar). La persona necesita saber la ventana operativa, no solo el pico malo. Ejemplo: "Bajamar al mediodía (0.5 m) — poca agua hasta la tarde. La plea de la tarde mejora."
-- Mencioná eventos NORMAL solo cuando dan contexto útil (recuperación, ventana segura). No los describas como problemáticos.
-- Los horarios son PICOS del ciclo — la condición dura horas alrededor del pico. Hablá de franjas, no de minutos exactos.
-- Usá exactamente la franja que viene en cada evento: "madrugada" NO es "la noche", es el día siguiente.
-- Para eventos importantes (POCA AGUA, NIVEL BAJO, MAREA ALTA), mencioná la hora y el nivel de forma coloquial. Ejemplos: "bajamar al mediodía (0.5 m)" o "plea a la tarde (1.3 m)".
-- Si el evento viene solo de INA (modelo), aclaralo con "según el INA" o "el modelo indica". Si viene de SHN (oficial), podés decirlo directamente — es la fuente principal.
+- Empezá siempre desde el nivel observado actual. Si está muy por debajo del pronóstico, decílo: "el agua bajó más de lo previsto" o "llegó más bajo de lo que indicaba el pronóstico".
+- Siempre describí el arco completo: la ventana mala Y cuándo mejora. La persona necesita saber cuándo puede salir tranquilo.
+- Mencioná eventos NORMAL solo cuando sirven para marcar la recuperación.
+- Los horarios son PICOS del ciclo — la condición dura horas alrededor. Hablá de franjas.
+- Para eventos importantes, mencioná hora y nivel: "bajamar al mediodía (0.5 m)", "plea a las 18:30 (1.2 m)".
+- Si el evento es solo de INA, aclaralo con "según el INA". Si es SHN, podés decirlo directamente.
 - Lluvia y viento SE solo si coinciden con un momento crítico.
-- Si TODOS los eventos son NORMAL, transmitilo con optimismo. Si alguno es NIVEL BAJO o peor, no uses "pinta bien" ni frases tranquilizadoras globales — siempre mencioná el evento relevante.
+- Si TODOS los eventos son NORMAL, transmitilo con optimismo. Si alguno es NIVEL BAJO o peor, no uses "pinta bien".
 
 Terminología: "pleamar" / "plea" para picos altos. "Bajamar" / "baja" para picos bajos.
 
 Tono: relajado, isleño, directo. No convertir un aviso en alerta de gobierno.
 Ejemplos correctos:
-✓ "Mañana al mediodía bajamar a 0.55 m según el INA — poca agua en esa franja. La plea de la tarde mejora."
-✓ "Todo normal por ahora. Mañana pinta bien también."
+✓ "El agua bajó más de lo previsto — ahora en 0.39 m y aún bajando. La plea de la tarde (18:30, 1.2 m) es la ventana para salir."
+✓ "Mañana al mediodía bajamar a 0.6 m según el INA — nivel bajo en esa franja. La plea de la noche mejora a 1.4 m."
 ✗ "Se espera un nivel crítico. Asegurate de planificar con precaución." ← muy formal
 
 Estilo:
 - Español rioplatense. Sin exclamaciones. Arrancá directo.
 - Frases cortas. Punto seguido en vez de comas encadenadas.
-- Si SHN e INA difieren, podés usar "podría". No menciones bandas de incertidumbre.
+- Si SHN e INA difieren bastante, podés usar "podría". No menciones bandas de incertidumbre.
 PROMPT;
     }
 
@@ -334,12 +348,23 @@ PROMPT;
 
         $sections = [];
 
-        // ── Estado actual ────────────────────────────────────────────────────
+        // ── Estado actual + tendencia horaria observada ──────────────────────
         $currentLines = [];
         if ($current) {
             $nivel     = number_format((float) $current['level'], 2);
             $tendency  = $trendMap[$trend] ?? $trend;
-            $currentLines[] = "Nivel (observado): {$nivel} m | Tendencia: {$tendency}";
+            $statusNow = $this->eventLabel($now, $now, (float) $current['level']);
+            // Extract just the STATUS part for current level
+            $statusPart = explode(' — ', $statusNow)[1] ?? '';
+            $currentLines[] = "Nivel observado: {$nivel} m ({$tendency}) — {$statusPart}";
+        }
+
+        // Últimas 4 lecturas horarias observadas — muestran la trayectoria real
+        $hourly = $tideData['hourly'] ?? [];
+        if (count($hourly) >= 2) {
+            $recent = array_slice($hourly, -4); // últimas 4
+            $obsStrs = array_map(fn ($h) => "{$h['hour']}: " . number_format((float) $h['level'], 2) . " m", $recent);
+            $currentLines[] = "Lecturas recientes (SHN observado): " . implode(' → ', $obsStrs);
         }
         if ($weather['available'] ?? false) {
             $temp      = $weather['temperature'] ?? null;
