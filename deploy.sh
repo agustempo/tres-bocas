@@ -151,7 +151,7 @@ php artisan update:tide-data && log "Tide cache warm." || warn "update:tide-data
 
 
 # ─── Step 9 · Laravel scheduler cron ─────────────────────────────────────────
-CRON_JOB="* * * * * $WEB_USER php $APP_DIR/artisan schedule:run >> /dev/null 2>&1"
+CRON_JOB="* * * * * $WEB_USER php $APP_DIR/artisan schedule:run >> /var/log/masbocas-scheduler.log 2>&1"
 CRON_FILE="/etc/cron.d/masbocas"
 
 if [[ ! -f "$CRON_FILE" ]]; then

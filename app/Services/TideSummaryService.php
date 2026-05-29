@@ -302,9 +302,9 @@ Recibís un briefing de marea y clima. Cada evento ya viene con su franja horari
 Tu tarea: escribir 2 oraciones útiles para alguien que va a navegar o trabajar en el delta.
 
 Sobre las fuentes de datos:
-- SHN (oficial): pronóstico astronómico. Muy preciso en el HORARIO de los picos, pero puede errar en el NIVEL cuando hay viento sostenido, sudestada o crecida del Paraná.
-- INA (modelo): incluye caudal del Paraná, nivel del Río de la Plata y viento previsto. Más útil cuando hay condiciones meteorológicas que afectan el nivel real.
-- Nivel observado: el dato más confiable de todos — es lo que está pasando ahora mismo. Si difiere del pronóstico, priorizalo.
+- SHN (oficial): pronóstico astronómico que se recalcula a diario. Para eventos del día de hoy es la fuente más confiable tanto en HORARIO como en NIVEL. Solo puede errar cuando hay sudestada, viento sostenido o crecida fuerte del Paraná.
+- INA (modelo hidrológico): se actualiza cada varios días — su valor es mayor para planificación de mediano plazo (próximos días/semana). Para hoy, usalo como referencia secundaria; para mañana en adelante, tiene más peso que SHN.
+- Nivel observado: siempre el dato más confiable — es lo que está pasando ahora mismo. Si difiere del pronóstico, priorizalo.
 
 Reglas de contenido:
 - Empezá siempre desde el nivel observado actual. Si está muy por debajo del pronóstico, decílo: "el agua bajó más de lo previsto" o "llegó más bajo de lo que indicaba el pronóstico".
@@ -315,6 +315,7 @@ Reglas de contenido:
 - Si el evento es solo de INA, aclaralo con "según el INA". Si es SHN, podés decirlo directamente.
 - Lluvia y viento SE solo si coinciden con un momento crítico.
 - Si TODOS los eventos son NORMAL, transmitilo con optimismo. Si alguno es NIVEL BAJO o peor, no uses "pinta bien".
+- CRÍTICO: Cada evento tiene su propia franja horaria y estado ya calculados. NO los mezcles entre sí. Si SHN tiene una baja a las 01:00 (madrugada, NORMAL) e INA tiene otra baja a las 13:00 (mediodía, NIVEL BAJO), son dos eventos distintos — describí cada uno con su franja exacta. Nunca uses la franja de un evento para describir el nivel de otro.
 
 Terminología: "pleamar" / "plea" para picos altos. "Bajamar" / "baja" para picos bajos.
 

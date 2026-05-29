@@ -168,38 +168,55 @@
 {{-- ══ COMPARISON CARD ══════════════════════════════════════════════════════ --}}
 @if($comparison)
 @php
-    $cmp     = $comparison;
-    $isMin   = $cmp['kind'] === 'min';
+    $cmp       = $comparison;
+    $isMin     = $cmp['kind'] === 'min';
     $kindLabel = $isMin ? __('ui.tide_event_min') : __('ui.tide_event_max');
-    $titleKey  = __('ui.tide_comparison_title', ['kind' => strtolower($kindLabel)]);
-    $interpMsg = __('ui.tide_comparison_'.$cmp['interp']);
-    $interpBg  = $cmp['interp'] === 'notable_diff'
-        ? 'bg-amber-50 text-amber-600 border-amber-200/60 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/40'
-        : 'bg-gray-100 text-gray-500 border-gray-200/60 dark:bg-gray-800/60 dark:text-gray-400 dark:border-gray-700/40';
+    $hasBoth   = $cmp['source'] === 'both';
+    $isInaOnly = $cmp['source'] === 'ina';
+
+    // Is the event today? If so, SHN is more authoritative (recalculates daily; INA every few days)
+    $eventIsToday = ($cmp['day_label'] ?? '') === 'Hoy';
+
+    // Title and subtitle
+    $sourceLabel = $hasBoth
+        ? ($eventIsToday
+            ? 'Ambas fuentes — SHN más preciso para hoy'
+            : __('ui.tide_comparison_subtitle'))
+        : ($isInaOnly ? 'Solo INA · modelo' : 'Solo SHN · oficial');
+    $titleStr = strtoupper($kindLabel) . ' ' . strtoupper($isMin ? 'próxima' : 'próxima');
+
     $shnLevelColor = match($cmp['status']['color'] ?? 'gray') {
         'red','orange','yellow' => 'text-amber-400',
         default                  => 'text-blue-300',
     };
+    $inaLevelColor = 'text-purple-300';
+
+    // Diff bar (only when both sources)
+    $interpMsg = $hasBoth ? __('ui.tide_comparison_'.$cmp['interp']) : null;
+    $interpBg  = ($cmp['interp'] ?? '') === 'notable_diff'
+        ? 'bg-amber-50 text-amber-600 border-amber-200/60 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/40'
+        : 'bg-gray-100 text-gray-500 border-gray-200/60 dark:bg-gray-800/60 dark:text-gray-400 dark:border-gray-700/40';
 @endphp
 
 <div class="rounded-2xl border border-gray-200/60 dark:border-gray-700/50 bg-white dark:bg-gray-900 overflow-hidden">
 
     <div class="px-5 pt-4 pb-1">
         <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">
-            {{ $titleKey }}
+            {{ $titleStr }}
         </p>
-        <p class="text-xs text-gray-600">
-            {{ __('ui.tide_comparison_subtitle') }}
+        <p class="text-xs text-gray-600 dark:text-gray-500">
+            {{ $sourceLabel }}
         </p>
     </div>
 
-    {{-- Side-by-side cards --}}
-    <div class="grid grid-cols-2 gap-0 divide-x divide-gray-200/60 dark:divide-gray-700/50 px-0">
+    {{-- Layout: two columns when both sources, single column otherwise --}}
+    <div class="{{ $hasBoth ? 'grid grid-cols-2 gap-0 divide-x divide-gray-200/60 dark:divide-gray-700/50' : '' }} px-0">
 
-        {{-- SHN side --}}
+        {{-- SHN side (shown when source = shn or both) --}}
+        @if(!$isInaOnly)
         <div class="px-5 py-4 space-y-1">
             <span class="src-badge shn-pro">{{ __('ui.tide_src_shn_pro') }}</span>
-            <p class="text-xs text-gray-500 uppercase tracking-wide mt-2">{{ $isMin ? __('ui.tide_event_min') : __('ui.tide_event_max') }}</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wide mt-2">{{ $kindLabel }}</p>
             <p class="text-3xl font-black tabular-nums {{ $shnLevelColor }}">
                 {{ number_format($cmp['shn_value'], 2) }} <span class="text-base font-normal text-gray-500">m</span>
             </p>
@@ -211,12 +228,14 @@
                 {{ __('ui.tide_comparison_shn_method') }}
             </p>
         </div>
+        @endif
 
-        {{-- INA side --}}
+        {{-- INA side (shown when source = ina or both) --}}
+        @if($hasBoth || $isInaOnly)
         <div class="px-5 py-4 space-y-1">
             <span class="src-badge ina">{{ __('ui.tide_src_ina') }}</span>
-            <p class="text-xs text-gray-500 uppercase tracking-wide mt-2">{{ $isMin ? __('ui.tide_event_min') : __('ui.tide_event_max') }}</p>
-            <p class="text-3xl font-black tabular-nums text-purple-300">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mt-2">{{ $kindLabel }}</p>
+            <p class="text-3xl font-black tabular-nums {{ $inaLevelColor }}">
                 {{ number_format($cmp['ina_value'], 2) }} <span class="text-base font-normal text-gray-500">m</span>
             </p>
             <p class="text-sm text-gray-700 dark:text-gray-300 font-semibold">
@@ -225,11 +244,16 @@
             </p>
             <p class="text-[10px] text-gray-600 leading-snug mt-2">
                 {{ __('ui.tide_comparison_ina_method') }}
+                @if($eventIsToday && $hasBoth)
+                <span class="block mt-1 text-gray-500 dark:text-gray-600">Se actualiza cada varios días — referencia.</span>
+                @endif
             </p>
         </div>
+        @endif
     </div>
 
-    {{-- Difference bar --}}
+    {{-- Difference bar — only when both sources --}}
+    @if($hasBoth && $cmp['diff'] !== null)
     <div class="px-5 py-3 border-t border-gray-200/60 dark:border-gray-700/50">
         <div class="rounded-lg border {{ $interpBg }} px-3 py-2 text-xs">
             <span class="font-semibold">{{ __('ui.tide_comparison_diff_label', ['diff' => number_format($cmp['diff'], 2)]) }}</span>
@@ -237,6 +261,7 @@
             {{ $interpMsg }}
         </div>
     </div>
+    @endif
 </div>
 @endif
 
