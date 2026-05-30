@@ -63,7 +63,7 @@ class MareaController extends Controller
         $inaExtremes = $this->detectExtremes($inaForecast);
         $events      = $this->buildEvents($shnForecast, $inaExtremes, $nowIso);
         $alarms      = $this->generateAlarms($inaForecast, $nowIso);
-        $comparison  = $this->buildComparison($shnForecast, $inaExtremes, $nowIso);
+        $comparison  = $this->buildComparison($events, $inaExtremes, $nowIso);
         $seWind      = $this->getSeWindForecast($tide['weather'] ?? []);
         $summary     = $this->buildSummary($tide, $comparison, $inaExtremes, $nowIso);
         $windHourly  = $this->buildWindSeries($tide['weather'] ?? []);
@@ -246,49 +246,76 @@ class MareaController extends Controller
 
     // ── Comparison card ───────────────────────────────────────────────────────
 
-    private function buildComparison(array $shnForecast, array $inaExtremes, string $nowIso): ?array
+    private function buildComparison(array $events, array $inaExtremes, string $nowIso): ?array
     {
-        $tz          = self::TZ;
-        $matchWindow = config('tide.event_match_window_minutes', 30);
-        $nowC        = Carbon::now($tz);
-
-        foreach ($shnForecast as $shn) {
-            $shnTs = Carbon::parse($shn['time'], $tz);
-            if ($shnTs->lt($nowC->copy()->subMinutes(50))) {
-                continue;
-            }
-
-            foreach ($inaExtremes as $ina) {
-                if ($ina['kind'] !== $shn['kind']) {
-                    continue;
-                }
-                if (abs(Carbon::parse($ina['time'], $tz)->diffInMinutes($shnTs)) > $matchWindow) {
-                    continue;
-                }
-
-                $diff  = abs($shn['value'] - $ina['value']);
-                $interp = match (true) {
-                    $diff < 0.10 => 'agree',
-                    $diff < 0.20 => 'minor_diff',
-                    default      => 'notable_diff',
-                };
-
-                return [
-                    'kind'      => $shn['kind'],
-                    'shn_time'  => $shn['time'],
-                    'shn_value' => $shn['value'],
-                    'ina_time'  => $ina['time'],
-                    'ina_value' => $ina['value'],
-                    'diff'      => round($diff, 3),
-                    'interp'    => $interp,
-                    'day_label' => $shn['day_label'],
-                    'relative'  => $this->relativeTime($shnTs, $nowC),
-                    'status'    => $shn['status'],
-                ];
-            }
+        if (empty($events)) {
+            return null;
         }
 
-        return null;
+        $tz   = self::TZ;
+        $nowC = Carbon::now($tz);
+
+        // Use the chronologically next event (events are already sorted + filtered by buildEvents)
+        $next = null;
+        foreach ($events as $evt) {
+            if (Carbon::parse($evt['time'], $tz)->gte($nowC->copy()->subMinutes(50))) {
+                $next = $evt;
+                break;
+            }
+        }
+        if ($next === null) {
+            return null;
+        }
+
+        $ts     = Carbon::parse($next['time'], $tz);
+        $source = $next['source']; // 'shn', 'ina', or 'both'
+
+        $shnTime  = in_array($source, ['shn', 'both']) ? $next['time']  : null;
+        $shnValue = in_array($source, ['shn', 'both']) ? $next['value'] : null;
+        $inaValue = $source === 'ina' ? $next['value'] : ($next['ina_value'] ?? null);
+        $inaTime  = null;
+
+        // Resolve INA timestamp for paired events
+        if ($inaValue !== null && $source !== 'ina') {
+            $matchWindow = config('tide.event_match_window_minutes', 30);
+            foreach ($inaExtremes as $ina) {
+                if ($ina['kind'] !== $next['kind']) {
+                    continue;
+                }
+                if (abs(Carbon::parse($ina['time'], $tz)->diffInMinutes($ts)) <= $matchWindow) {
+                    $inaTime = $ina['time'];
+                    break;
+                }
+            }
+        } elseif ($source === 'ina') {
+            $inaTime = $next['time'];
+        }
+
+        // Difference only meaningful when both sources are present
+        $diff   = null;
+        $interp = null;
+        if ($shnValue !== null && $inaValue !== null) {
+            $diff   = round(abs($shnValue - $inaValue), 3);
+            $interp = match (true) {
+                $diff < 0.10 => 'agree',
+                $diff < 0.20 => 'minor_diff',
+                default      => 'notable_diff',
+            };
+        }
+
+        return [
+            'kind'      => $next['kind'],
+            'source'    => $source,
+            'shn_time'  => $shnTime,
+            'shn_value' => $shnValue,
+            'ina_time'  => $inaTime,
+            'ina_value' => $inaValue,
+            'diff'      => $diff,
+            'interp'    => $interp,
+            'day_label' => $next['day_label'],
+            'relative'  => $this->relativeTime($ts, $nowC),
+            'status'    => $next['status'],
+        ];
     }
 
     // ── SE Wind ───────────────────────────────────────────────────────────────

@@ -149,7 +149,7 @@ Tono: mensaje de texto a un vecino isleño. Relajado, con buena onda, directo. S
 Cada evento viene con su franja horaria y estado. Usá esas etiquetas:
 - Si todos los eventos de hoy son NORMAL → una frase positiva y corta.
 - Si hay un evento no-NORMAL hoy → mencioná la franja y, si hay recuperación hoy mismo, nombrála. Si la recuperación es mañana, no hace falta explicarla en detalle.
-- Si la "Tendencia observada" muestra niveles muy por debajo del pronóstico → mencionalo en una frase.
+- Si el prompt incluye una línea "DIVERGENCIA:" → mencionalo brevemente en una frase. Si no hay esa línea, no digas que el agua bajó más de lo previsto.
 - No describas cada evento cronológicamente. Resumí la vibe del día.
 
 Terminología: "pleamar"/"plea" para picos altos. "Bajamar"/"baja" para picos bajos.
@@ -216,12 +216,44 @@ PROMPT;
             $lines[] = implode(' | ', $stateParts);
         }
 
-        // Tendencia observada — últimas lecturas horarias (para ver si el agua bajó más de lo previsto)
+        // Tendencia observada — últimas lecturas horarias
         $hourly = $tideData['hourly'] ?? [];
         if (count($hourly) >= 2) {
             $recent  = array_slice($hourly, -3);
             $obsStrs = array_map(fn ($h) => "{$h['hour']}: " . number_format((float) $h['level'], 2) . " m", $recent);
             $lines[] = "Tendencia observada: " . implode(' → ', $obsStrs);
+        }
+
+        // ── Divergencia observado vs SHN (solo se emite si supera umbral) ──
+        $currentLevel = $tideData['current']['level'] ?? null;
+        if ($currentLevel !== null && count($shnForecast) >= 2) {
+            $observed    = (float) $currentLevel;
+            $pastExtreme = null;
+            $nextExtreme = null;
+            foreach ($shnForecast as $e) {
+                if (strcmp($e['time'], $nowIso) <= 0) {
+                    $pastExtreme = $e;
+                } elseif ($nextExtreme === null) {
+                    $nextExtreme = $e;
+                    break;
+                }
+            }
+            if ($pastExtreme && $nextExtreme) {
+                $t0       = Carbon::parse($pastExtreme['time'], $tz)->timestamp;
+                $t1       = Carbon::parse($nextExtreme['time'], $tz)->timestamp;
+                $tn       = $now->timestamp;
+                $fraction = ($t1 > $t0) ? ($tn - $t0) / ($t1 - $t0) : 0.5;
+                $fraction = max(0, min(1, $fraction));
+                $expected = $pastExtreme['value'] + $fraction * ($nextExtreme['value'] - $pastExtreme['value']);
+                $diff     = $observed - $expected;
+                if (abs($diff) >= 0.15) {
+                    $dir     = $diff < 0 ? 'por debajo' : 'por encima';
+                    $lines[] = sprintf(
+                        "DIVERGENCIA: nivel actual %.2f m está %.2f m %s del pronóstico SHN (esperado aprox. %.2f m)",
+                        $observed, abs($diff), $dir, $expected
+                    );
+                }
+            }
         }
 
         // ── Próximos eventos: cronológicos, SHN preferido, INA llena los gaps ──
@@ -307,7 +339,7 @@ Sobre las fuentes de datos:
 - Nivel observado: siempre el dato más confiable — es lo que está pasando ahora mismo. Si difiere del pronóstico, priorizalo.
 
 Reglas de contenido:
-- Empezá siempre desde el nivel observado actual. Si está muy por debajo del pronóstico, decílo: "el agua bajó más de lo previsto" o "llegó más bajo de lo que indicaba el pronóstico".
+- Si el prompt incluye una línea "DIVERGENCIA:", mencioná que el agua está por debajo (o encima) de lo previsto usando los valores que dice esa línea. Si NO hay línea DIVERGENCIA, NO digas que el agua bajó o subió más de lo previsto — simplemente arrancá desde el nivel actual.
 - Siempre describí el arco completo: la ventana mala Y cuándo mejora. La persona necesita saber cuándo puede salir tranquilo.
 - Mencioná eventos NORMAL solo cuando sirven para marcar la recuperación.
 - Los horarios son PICOS del ciclo — la condición dura horas alrededor. Hablá de franjas.
@@ -364,9 +396,44 @@ PROMPT;
         // Últimas 4 lecturas horarias observadas — muestran la trayectoria real
         $hourly = $tideData['hourly'] ?? [];
         if (count($hourly) >= 2) {
-            $recent = array_slice($hourly, -4); // últimas 4
+            $recent = array_slice($hourly, -4);
             $obsStrs = array_map(fn ($h) => "{$h['hour']}: " . number_format((float) $h['level'], 2) . " m", $recent);
             $currentLines[] = "Lecturas recientes (SHN observado): " . implode(' → ', $obsStrs);
+        }
+
+        // ── Divergencia observado vs pronóstico SHN (interpolación lineal) ──
+        // Solo se agrega la línea DIVERGENCIA si la diferencia supera el umbral.
+        // El LLM solo debe decir "bajó más de lo previsto" cuando este dato aparece.
+        if ($current && count($shnForecast) >= 2) {
+            $observed    = (float) $current['level'];
+            $pastExtreme = null;
+            $nextExtreme = null;
+            foreach ($shnForecast as $e) {
+                if (strcmp($e['time'], $nowIso) <= 0) {
+                    $pastExtreme = $e;
+                } elseif ($nextExtreme === null) {
+                    $nextExtreme = $e;
+                    break;
+                }
+            }
+            if ($pastExtreme && $nextExtreme) {
+                $t0       = Carbon::parse($pastExtreme['time'], $tz)->timestamp;
+                $t1       = Carbon::parse($nextExtreme['time'], $tz)->timestamp;
+                $tn       = $now->timestamp;
+                $fraction = ($t1 > $t0) ? ($tn - $t0) / ($t1 - $t0) : 0.5;
+                $fraction = max(0, min(1, $fraction));
+                $expected = $pastExtreme['value'] + $fraction * ($nextExtreme['value'] - $pastExtreme['value']);
+                $diff     = $observed - $expected;
+                if (abs($diff) >= 0.15) {
+                    $dir            = $diff < 0 ? 'por debajo' : 'por encima';
+                    $currentLines[] = sprintf(
+                        "DIVERGENCIA: nivel actual %.2f m está %.2f m %s del pronóstico SHN (esperado aprox. %.2f m entre %s %.2f m y %s %.2f m)",
+                        $observed, abs($diff), $dir, $expected,
+                        Carbon::parse($pastExtreme['time'], $tz)->format('H:i'), $pastExtreme['value'],
+                        Carbon::parse($nextExtreme['time'], $tz)->format('H:i'), $nextExtreme['value']
+                    );
+                }
+            }
         }
         if ($weather['available'] ?? false) {
             $temp      = $weather['temperature'] ?? null;
